@@ -1,0 +1,193 @@
+SPRING BOOT STARTER FILES — FILE MAPPING GUIDE
+================================================
+
+This shows where each file should go in your project.
+
+PROJECT ROOT (hrms-hackathon/)
+│
+├── pom.xml                                (already have from template)
+├── Dockerfile                             (already have from template)
+│
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/hrms/
+│   │   │       ├── HrmsApplication.java                    ← java/HrmsApplication.java
+│   │   │       │
+│   │   │       ├── controller/
+│   │   │       │   └── HealthController.java              ← java/HealthController.java
+│   │   │       │
+│   │   │       ├── config/
+│   │   │       │   └── SecurityConfig.java                ← java/SecurityConfig.java
+│   │   │       │
+│   │   │       └── exception/
+│   │   │           ├── ResourceNotFoundException.java      ← java/ResourceNotFoundException.java
+│   │   │           ├── BusinessException.java             ← java/BusinessException.java
+│   │   │           └── GlobalExceptionHandler.java        ← java/GlobalExceptionHandler.java
+│   │   │
+│   │   └── resources/
+│   │       ├── application.yml                            ← resources/application.yml
+│   │       │
+│   │       └── db/
+│   │           └── migration/
+│   │               └── V1__initial_schema.sql             ← resources/db/migration/V1__initial_schema.sql
+│   │
+│   └── test/
+│       └── java/
+│           └── com/hrms/
+│               (tests will be added later)
+│
+└── .git/                                  (already have from GitHub clone)
+
+COPY COMMANDS (from project root)
+==================================
+
+1. Copy HrmsApplication.java to root of com/hrms package:
+   cp spring-boot-starter-files/java/HrmsApplication.java src/main/java/com/hrms/
+
+2. Copy HealthController to controller package:
+   cp spring-boot-starter-files/java/HealthController.java src/main/java/com/hrms/controller/
+
+3. Copy SecurityConfig to config package:
+   cp spring-boot-starter-files/java/SecurityConfig.java src/main/java/com/hrms/config/
+
+4. Copy exceptions to exception package:
+   cp spring-boot-starter-files/java/ResourceNotFoundException.java src/main/java/com/hrms/exception/
+   cp spring-boot-starter-files/java/BusinessException.java src/main/java/com/hrms/exception/
+   cp spring-boot-starter-files/java/GlobalExceptionHandler.java src/main/java/com/hrms/exception/
+
+5. Copy application.yml to resources:
+   cp spring-boot-starter-files/resources/application.yml src/main/resources/
+
+6. Copy Flyway migration:
+   cp spring-boot-starter-files/resources/db/migration/V1__initial_schema.sql src/main/resources/db/migration/
+
+PACKAGE STRUCTURE TO CREATE
+============================
+
+Before copying files, ensure these directories exist:
+
+mkdir -p src/main/java/com/hrms/controller
+mkdir -p src/main/java/com/hrms/config
+mkdir -p src/main/java/com/hrms/exception
+mkdir -p src/main/java/com/hrms/entity
+mkdir -p src/main/java/com/hrms/repository
+mkdir -p src/main/java/com/hrms/service
+mkdir -p src/main/resources/db/migration
+
+FILE CONTENTS SUMMARY
+====================
+
+1. HrmsApplication.java
+   - Location: src/main/java/com/hrms/
+   - Type: Main Spring Boot class
+   - Annotations: @SpringBootApplication
+   - Purpose: Entry point for the application
+   - Dependency: None
+
+2. HealthController.java
+   - Location: src/main/java/com/hrms/controller/
+   - Type: REST Controller
+   - Endpoint: GET /api/health
+   - Purpose: Health check for deployment systems
+   - Dependency: Spring Web
+
+3. SecurityConfig.java
+   - Location: src/main/java/com/hrms/config/
+   - Type: Spring Configuration class
+   - Features: Password encoding (BCrypt) + CORS config
+   - Purpose: Security setup for the application
+   - Dependency: Spring Security
+
+4. ResourceNotFoundException.java
+   - Location: src/main/java/com/hrms/exception/
+   - Type: Custom RuntimeException
+   - When thrown: Resource not found (404)
+   - Used by: Services when entity lookup fails
+   - Dependency: None
+
+5. BusinessException.java
+   - Location: src/main/java/com/hrms/exception/
+   - Type: Custom RuntimeException
+   - When thrown: Business rule violation (400)
+   - Used by: Services for validation failures, insufficient data, etc.
+   - Dependency: None
+
+6. GlobalExceptionHandler.java
+   - Location: src/main/java/com/hrms/exception/
+   - Type: REST Controller Advice (AOP)
+   - Purpose: Centralized exception handling
+   - Handlers:
+     * ResourceNotFoundException → 404
+     * BusinessException → 400
+     * All other exceptions → 500
+   - Dependency: Spring Web
+
+7. application.yml
+   - Location: src/main/resources/
+   - Type: YAML configuration file
+   - Contains:
+     * Database connection (PostgreSQL)
+     * Flyway migration config
+     * JPA/Hibernate settings
+     * Logging configuration
+     * Server settings (port 8080)
+   - Dependency: None (YAML file)
+
+8. V1__initial_schema.sql
+   - Location: src/main/resources/db/migration/
+   - Type: SQL migration script (Flyway)
+   - Naming: V{VERSION}__{DESCRIPTION}.sql
+   - Purpose: Database schema baseline
+   - Dependency: PostgreSQL/Flyway
+
+VERIFICATION CHECKLIST
+=======================
+
+After copying all files:
+
+[ ] src/main/java/com/hrms/HrmsApplication.java exists
+[ ] src/main/java/com/hrms/controller/HealthController.java exists
+[ ] src/main/java/com/hrms/config/SecurityConfig.java exists
+[ ] src/main/java/com/hrms/exception/ResourceNotFoundException.java exists
+[ ] src/main/java/com/hrms/exception/BusinessException.java exists
+[ ] src/main/java/com/hrms/exception/GlobalExceptionHandler.java exists
+[ ] src/main/resources/application.yml exists
+[ ] src/main/resources/db/migration/V1__initial_schema.sql exists
+
+[ ] All package declarations at top of Java files are correct:
+    - HrmsApplication: package com.hrms;
+    - HealthController: package com.hrms.controller;
+    - SecurityConfig: package com.hrms.config;
+    - Exceptions: package com.hrms.exception;
+
+[ ] application.yml database URL is updated (if not using default)
+
+[ ] Build succeeds: mvn clean package
+
+[ ] Application runs: mvn spring-boot:run
+
+[ ] Health check works: curl http://localhost:8080/api/health
+
+WHAT'S NEXT?
+============
+
+Once all files are in place and verified:
+
+1. Commit to Git:
+   git add .
+   git commit -m "feat: initial Spring Boot setup with health endpoint"
+   git push origin develop
+
+2. Start Day 2 of the 20-day schedule:
+   - Set up PostgreSQL with managed service (Render/Railway)
+   - Create initial database tables in V2__add_*.sql
+
+3. Day 4+:
+   - Create Employee entity
+   - Create EmployeeRepository
+   - Create EmployeeService
+   - Create EmployeeController
+   - (Follow the 20-day schedule)
+
+Good luck! 🚀
