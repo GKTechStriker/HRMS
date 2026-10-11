@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Departments & Org Structure')}"></head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+<header th:replace="~{fragments/layout :: navbar('departments')}"></header>
+
+<main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <div th:if="${successMessage}" class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 font-medium"
+         th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800 font-medium"
+         th:text="${errorMessage}"></div>
+
+    <!-- Header & HR Admin Action -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900">Departments &amp; Organizational Structure</h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Department hierarchy, headcounts, and job role designations.
+            </p>
+        </div>
+
+        <!-- Write control omitted from DOM for SUPER_ADMIN (Section 9.4) -->
+        <div sec:authorize="hasRole('HR_ADMIN')">
+            <a th:href="@{/departments/new}"
+               class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                + New Department
+            </a>
+        </div>
+    </div>
+
+    <!-- Department Cards / Org Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div th:each="dept : ${departments}" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base font-bold text-slate-900" th:text="${dept.name}">Engineering</h2>
+                    <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200"
+                          th:text="${headcounts.get(dept.id) != null ? headcounts.get(dept.id) : 0} + ' Employees'">
+                        0 Employees
+                    </span>
+                </div>
+                <p class="text-xs text-slate-500 mt-2">
+                    Parent Unit:
+                    <span class="font-medium text-slate-700"
+                          th:text="${dept.parentDepartment != null ? dept.parentDepartment.name : 'Top-Level Department'}">Top-Level</span>
+                </p>
+                <p class="text-xs text-slate-500 mt-1">
+                    Department Head:
+                    <span class="font-medium text-slate-700"
+                          th:text="${dept.headEmployee != null ? dept.headEmployee.fullName + ' (' + dept.headEmployee.employeeCode + ')' : 'Unassigned'}">Unassigned</span>
+                </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+                <a th:href="@{/employees(departmentId=${dept.id})}"
+                   class="text-xs font-semibold text-blue-600 hover:text-blue-800">
+                    View Department Employees &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Job Roles Table & HR Admin Creation Form -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200">
+                <h2 class="text-base font-bold text-slate-900">Job Role Designations</h2>
+                <p class="text-xs text-slate-500">Configured job titles and seniority levels per department.</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold">
+                    <tr>
+                        <th class="px-4 py-3 text-left">Job Title</th>
+                        <th class="px-4 py-3 text-left">Department</th>
+                        <th class="px-4 py-3 text-left">Level</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                    <tr th:each="jr : ${jobRoles}" class="hover:bg-slate-50">
+                        <td class="px-4 py-3 font-medium text-slate-800" th:text="${jr.title}">Software Engineer</td>
+                        <td class="px-4 py-3 text-slate-600" th:text="${jr.department.name}">Engineering</td>
+                        <td class="px-4 py-3 font-mono text-xs text-slate-600" th:text="'L' + ${jr.level}">L2</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Add Job Role Card (HR_ADMIN only) -->
+        <div sec:authorize="hasRole('HR_ADMIN')" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-fit">
+            <h2 class="text-base font-bold text-slate-900 mb-1">Add Job Role</h2>
+            <p class="text-xs text-slate-500 mb-4">Creates a new designation and logs <code class="font-mono">JOB_ROLE_CREATED</code>.</p>
+
+            <form th:action="@{/departments/job-roles}" method="post" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Job Title</label>
+                    <input type="text" name="title" required placeholder="e.g. Senior Backend Engineer"
+                           class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none"/>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Department</label>
+                    <select name="departmentId" required
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                        <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.name}">Dept</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Level (1–10)</label>
+                    <input type="number" name="level" min="1" max="10" value="2" required
+                           class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none"/>
+                </div>
+                <button type="submit"
+                        class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                    Create Job Role
+                </button>
+            </form>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

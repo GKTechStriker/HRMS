@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Session Management')}"></head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+<header th:replace="~{fragments/layout :: navbar('sessions')}"></header>
+
+<main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <div th:if="${successMessage}" class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 font-medium"
+         th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800 font-medium"
+         th:text="${errorMessage}"></div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="px-6 py-5 border-b border-slate-200">
+            <h1 class="text-lg font-bold text-slate-900">Active &amp; Historical Sessions</h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Backed by Spring Session JDBC (<code class="font-mono">SPRING_SESSION</code>) and <code class="font-mono">user_sessions</code>.
+                Revoking an active session deletes its database row immediately and logs a <code class="font-mono">SESSION_REVOKED</code> audit entry.
+            </p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold">
+                <tr>
+                    <th class="px-4 py-3 text-left">User</th>
+                    <th class="px-4 py-3 text-left">Role / HR Code</th>
+                    <th class="px-4 py-3 text-left">Session ID</th>
+                    <th class="px-4 py-3 text-left">IP &amp; Device</th>
+                    <th class="px-4 py-3 text-left">Login Time</th>
+                    <th class="px-4 py-3 text-left">Status</th>
+                    <th class="px-4 py-3 text-right">Action</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                <tr th:each="sess : ${sessions}" class="hover:bg-slate-50">
+                    <td class="px-4 py-3 font-medium text-slate-800" th:text="${sess.user.email}">user@company.com</td>
+                    <td class="px-4 py-3 text-xs">
+                        <span class="font-semibold text-slate-700" th:text="${sess.user.role}">ROLE</span>
+                        <span th:if="${sess.user.hrCode != null}" class="ml-1 font-mono text-blue-700" th:text="'(' + ${sess.user.hrCode} + ')'"></span>
+                    </td>
+                    <td class="px-4 py-3 font-mono text-xs text-slate-500">
+                        <span th:text="${#strings.abbreviate(sess.sessionId, 16)}">id</span>
+                        <span th:if="${sess.sessionId == currentSessionId}"
+                              class="ml-1 px-1.5 py-0.5 text-[10px] font-sans font-semibold rounded bg-blue-50 text-blue-700 border border-blue-200">
+                            Current
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-xs text-slate-600">
+                        <div class="font-mono" th:text="${sess.ipAddress}">127.0.0.1</div>
+                        <div class="text-slate-400 truncate max-w-xs" th:text="${sess.userAgent}">Browser</div>
+                    </td>
+                    <td class="px-4 py-3 font-mono text-xs text-slate-600" th:text="${sess.loginAt}">Time</td>
+                    <td class="px-4 py-3">
+                        <span th:if="${sess.logoutAt == null}"
+                              class="px-2 py-0.5 text-xs font-semibold rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            ACTIVE
+                        </span>
+                        <span th:if="${sess.logoutAt != null}"
+                              class="px-2 py-0.5 text-xs font-semibold rounded bg-slate-100 text-slate-600 border border-slate-300"
+                              th:text="${sess.endedReason != null ? sess.endedReason : 'ENDED'}">
+                            ENDED
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        <form th:if="${sess.logoutAt == null}"
+                              th:action="@{/sessions/{id}/revoke(id=${sess.id})}"
+                              method="post"
+                              onsubmit="return confirm('Revoke this active session immediately?');">
+                            <button type="submit"
+                                    class="px-2.5 py-1 text-xs font-semibold rounded bg-red-50 hover:bg-red-600 text-red-700 hover:text-white border border-red-200 transition">
+                                Revoke
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

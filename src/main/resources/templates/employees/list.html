@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Employee Directory')}"></head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+<header th:replace="~{fragments/layout :: navbar('employees')}"></header>
+
+<main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <div th:if="${successMessage}" class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 font-medium"
+         th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800 font-medium"
+         th:text="${errorMessage}"></div>
+
+    <!-- Header & HR Admin Controls (Omitted from DOM for SUPER_ADMIN per Section 9.4) -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900">Employee Directory</h1>
+            <p class="text-xs text-slate-500 mt-1"
+               th:text="'Showing ' + ${employeePage.numberOfElements} + ' of ' + ${employeePage.totalElements} + ' employee record(s)'">
+                Showing records
+            </p>
+        </div>
+
+        <div sec:authorize="hasRole('HR_ADMIN')" class="flex items-center space-x-2.5">
+            <a th:href="@{/employees/import}"
+               class="inline-flex items-center px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg shadow-sm transition">
+                CSV Bulk Import (Dry-Run)
+            </a>
+            <a th:href="@{/employees/new}"
+               class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                + Add Employee
+            </a>
+        </div>
+    </div>
+
+    <!-- Search & Filter Bar (Section 6.2 & 9.4) -->
+    <form th:action="@{/employees}" method="get"
+          class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+        <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Search</label>
+            <input type="text" name="search" th:value="${search}" placeholder="Name, EMP-xxx, or email..."
+                   class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none"/>
+        </div>
+
+        <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Department</label>
+            <select name="departmentId"
+                    class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                <option value="">All Departments</option>
+                <option th:each="d : ${departments}"
+                        th:value="${d.id}"
+                        th:text="${d.name}"
+                        th:selected="${selectedDepartmentId != null and selectedDepartmentId == d.id}">Dept</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Job Role</label>
+            <select name="jobRoleId"
+                    class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                <option value="">All Job Roles</option>
+                <option th:each="jr : ${jobRoles}"
+                        th:value="${jr.id}"
+                        th:text="${jr.title + ' (' + jr.department.name + ')'}"
+                        th:selected="${selectedJobRoleId != null and selectedJobRoleId == jr.id}">Role</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Status</label>
+            <select name="status"
+                    class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                <option value="">All Statuses</option>
+                <option th:each="st : ${statuses}"
+                        th:value="${st}"
+                        th:text="${st}"
+                        th:selected="${selectedStatus != null and selectedStatus == st}">Status</option>
+            </select>
+        </div>
+
+        <div class="flex space-x-2">
+            <button type="submit"
+                    class="flex-1 py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition">
+                Filter
+            </button>
+            <a th:href="@{/employees}"
+               class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">
+                Reset
+            </a>
+        </div>
+    </form>
+
+    <!-- Employee Directory Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold">
+                <tr>
+                    <th class="px-4 py-3 text-left">Code</th>
+                    <th class="px-4 py-3 text-left">Full Name</th>
+                    <th class="px-4 py-3 text-left">Email</th>
+                    <th class="px-4 py-3 text-left">Department</th>
+                    <th class="px-4 py-3 text-left">Job Role</th>
+                    <th class="px-4 py-3 text-left">Joined</th>
+                    <th class="px-4 py-3 text-left">Status</th>
+                    <th class="px-4 py-3 text-right">Actions</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                <tr th:if="${employeePage.empty}">
+                    <td colspan="8" class="px-4 py-8 text-center text-slate-400 text-xs">
+                        No employees matched your filter criteria.
+                    </td>
+                </tr>
+                <tr th:each="emp : ${employeePage.content}" class="hover:bg-slate-50">
+                    <td class="px-4 py-3 font-mono text-xs font-semibold text-blue-700" th:text="${emp.employeeCode}">EMP-001</td>
+                    <td class="px-4 py-3 font-medium text-slate-900" th:text="${emp.fullName}">Name</td>
+                    <td class="px-4 py-3 text-xs text-slate-600" th:text="${emp.user != null ? emp.user.email : '—'}">email</td>
+                    <td class="px-4 py-3 text-xs text-slate-700" th:text="${emp.department.name}">Department</td>
+                    <td class="px-4 py-3 text-xs text-slate-600" th:text="${emp.jobRole.title}">Role</td>
+                    <td class="px-4 py-3 font-mono text-xs text-slate-600" th:text="${emp.dateOfJoining}">2024-01-01</td>
+                    <td class="px-4 py-3">
+                        <span th:if="${emp.status.name() == 'ACTIVE'}"
+                              class="px-2 py-0.5 text-xs font-semibold rounded bg-blue-50 text-blue-700 border border-blue-200">
+                            ACTIVE
+                        </span>
+                        <span th:if="${emp.status.name() == 'ON_LEAVE'}"
+                              class="px-2 py-0.5 text-xs font-semibold rounded bg-amber-50 text-amber-800 border border-amber-200">
+                            ON_LEAVE
+                        </span>
+                        <span th:if="${emp.status.name() == 'INACTIVE'}"
+                              class="px-2 py-0.5 text-xs font-semibold rounded bg-red-50 text-red-700 border border-red-200">
+                            INACTIVE
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-right space-x-2">
+                        <a th:href="@{/employees/{id}(id=${emp.id})}"
+                           class="text-xs font-semibold text-blue-600 hover:text-blue-800">View</a>
+                        <a sec:authorize="hasRole('HR_ADMIN')"
+                           th:href="@{/employees/{id}/edit(id=${emp.id})}"
+                           class="text-xs font-semibold text-slate-600 hover:text-slate-900">Edit</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Server-Side Pagination Controls -->
+        <div th:if="${employeePage.totalPages > 1}"
+             class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
+            <div>
+                Page <span class="font-semibold" th:text="${employeePage.number + 1}">1</span>
+                of <span class="font-semibold" th:text="${employeePage.totalPages}">1</span>
+            </div>
+            <div class="flex space-x-2">
+                <a th:if="${employeePage.hasPrevious()}"
+                   th:href="@{/employees(page=${employeePage.number - 1}, search=${search}, departmentId=${selectedDepartmentId}, jobRoleId=${selectedJobRoleId}, status=${selectedStatus})}"
+                   class="px-3 py-1 rounded bg-white border border-slate-300 hover:bg-slate-100 font-semibold">
+                    &larr; Previous
+                </a>
+                <a th:if="${employeePage.hasNext()}"
+                   th:href="@{/employees(page=${employeePage.number + 1}, search=${search}, departmentId=${selectedDepartmentId}, jobRoleId=${selectedJobRoleId}, status=${selectedStatus})}"
+                   class="px-3 py-1 rounded bg-white border border-slate-300 hover:bg-slate-100 font-semibold">
+                    Next &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

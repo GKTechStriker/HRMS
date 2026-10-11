@@ -2,7 +2,10 @@ package com.hrms.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
@@ -11,23 +14,14 @@ import java.time.LocalDateTime;
 /**
  * Global Exception Handler
  * 
- * Centralized exception handling for the entire Spring Boot application.
- * Converts exceptions into standardized JSON error responses with appropriate HTTP status codes.
- * 
- * This ensures all API endpoints return consistent error format:
- * {
- *   "timestamp": "2026-09-22T10:30:00",
- *   "status": 400,
- *   "error": "Business Error",
- *   "message": "Insufficient leave balance",
- *   "path": "uri=/api/leave/request"
- * }
+ * Centralized exception handling for REST API endpoints.
+ * Converts exceptions to appropriate HTTP responses with consistent error format.
  */
-@RestControllerAdvice
+@RestControllerAdvice(annotations = RestController.class)
 public class GlobalExceptionHandler {
     
     /**
-     * Handle ResourceNotFoundException (404 Not Found)
+     * Handle ResourceNotFoundException (404)
      */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(
@@ -44,8 +38,7 @@ public class GlobalExceptionHandler {
     }
     
     /**
-     * Handle BusinessException (400 Bad Request)
-     * For business rule violations, data validation errors, etc.
+     * Handle BusinessException (400)
      */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(
@@ -60,9 +53,17 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
+
+    /**
+     * Re-throw Spring Security exceptions so ExceptionTranslationFilter handles 401/403 properly.
+     */
+    @ExceptionHandler({AccessDeniedException.class, AuthenticationException.class})
+    public void handleSecurityExceptions(RuntimeException ex) {
+        throw ex;
+    }
     
     /**
-     * Handle all other uncaught exceptions (500 Internal Server Error)
+     * Handle generic exceptions (500)
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(
@@ -79,8 +80,7 @@ public class GlobalExceptionHandler {
     }
     
     /**
-     * Standard error response structure
-     * Returned by all exception handlers
+     * Standard error response format
      */
     static class ErrorResponse {
         public LocalDateTime timestamp;
@@ -98,7 +98,6 @@ public class GlobalExceptionHandler {
             this.path = path;
         }
         
-        // Getters for JSON serialization
         public LocalDateTime getTimestamp() { return timestamp; }
         public int getStatus() { return status; }
         public String getError() { return error; }

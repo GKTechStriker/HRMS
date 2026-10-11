@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Audit Trail')}"></head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+<header th:replace="~{fragments/layout :: navbar('audit')}"></header>
+
+<main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="px-6 py-5 border-b border-slate-200">
+            <h1 class="text-lg font-bold text-slate-900">Immutable Audit Trail</h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Append-only log enforced by PostgreSQL trigger and Spring AOP (<code class="font-mono">@Audited</code>).
+            </p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold">
+                <tr>
+                    <th class="px-4 py-3 text-left">Timestamp</th>
+                    <th class="px-4 py-3 text-left">Actor</th>
+                    <th class="px-4 py-3 text-left">HR Code</th>
+                    <th class="px-4 py-3 text-left">Action</th>
+                    <th class="px-4 py-3 text-left">Target</th>
+                    <th class="px-4 py-3 text-left">Before / After JSONB</th>
+                    <th class="px-4 py-3 text-left">Session / IP</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                <tr th:if="${#lists.isEmpty(auditLogs)}">
+                    <td colspan="7" class="px-4 py-8 text-center text-slate-400 text-xs">
+                        No audit entries found.
+                    </td>
+                </tr>
+                <tr th:each="entry : ${auditLogs}" class="hover:bg-slate-50 align-top">
+                    <td class="px-4 py-3 font-mono text-xs text-slate-600" th:text="${entry.occurredAt}">Time</td>
+                    <td class="px-4 py-3 font-medium text-slate-800" th:text="${entry.user.email}">hr1@company.com</td>
+                    <td class="px-4 py-3 font-mono text-xs text-blue-700" th:text="${entry.hrCode != null ? entry.hrCode : '—'}">HR-001</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-0.5 text-xs font-semibold rounded bg-amber-50 text-amber-800 border border-amber-200"
+                              th:text="${entry.action}">ACTION</span>
+                    </td>
+                    <td class="px-4 py-3 text-xs text-slate-600">
+                        <div class="font-semibold" th:text="${entry.targetType}">Type</div>
+                        <div class="font-mono text-slate-400" th:text="${entry.targetId}">UUID</div>
+                    </td>
+                    <td class="px-4 py-3 text-xs font-mono text-slate-600 space-y-1">
+                        <div th:if="${entry.previousData != null}">
+                            <span class="text-slate-400">Before:</span> <span th:text="${entry.previousData}">{}</span>
+                        </div>
+                        <div th:if="${entry.newData != null}">
+                            <span class="text-emerald-700">After:</span> <span th:text="${entry.newData}">{}</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 font-mono text-xs text-slate-500">
+                        <div th:text="${#strings.abbreviate(entry.sessionId, 18)}">session</div>
+                        <div class="text-slate-400" th:text="${entry.ipAddress}">127.0.0.1</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

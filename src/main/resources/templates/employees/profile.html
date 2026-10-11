@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head(${employee.fullName} + ' (' + ${employee.employeeCode} + ')')}"></head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+<header th:replace="~{fragments/layout :: navbar('employees')}"></header>
+
+<main class="max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <div th:if="${successMessage}" class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 font-medium"
+         th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800 font-medium"
+         th:text="${errorMessage}"></div>
+
+    <!-- Profile Header Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5">
+            <div class="flex items-center space-x-4">
+                <div class="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl"
+                     th:text="${#strings.substring(employee.fullName, 0, 1)}">A</div>
+                <div>
+                    <div class="flex items-center space-x-2.5">
+                        <h1 class="text-xl font-bold text-slate-900" th:text="${employee.fullName}">Employee Name</h1>
+                        <span class="px-2 py-0.5 font-mono text-xs font-semibold rounded bg-slate-100 text-slate-700 border border-slate-300"
+                              th:text="${employee.employeeCode}">EMP-001</span>
+                        <span th:if="${employee.status.name() == 'ACTIVE'}"
+                              class="px-2 py-0.5 text-xs font-semibold rounded bg-blue-50 text-blue-700 border border-blue-200">ACTIVE</span>
+                        <span th:if="${employee.status.name() == 'ON_LEAVE'}"
+                              class="px-2 py-0.5 text-xs font-semibold rounded bg-amber-50 text-amber-800 border border-amber-200">ON_LEAVE</span>
+                        <span th:if="${employee.status.name() == 'INACTIVE'}"
+                              class="px-2 py-0.5 text-xs font-semibold rounded bg-red-50 text-red-700 border border-red-200">INACTIVE</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1"
+                       th:text="${employee.jobRole.title + ' · ' + employee.department.name}">Job Role · Department</p>
+                </div>
+            </div>
+
+            <!-- HR Admin Controls (Omitted from DOM for SUPER_ADMIN & EMPLOYEE per Section 9.4) -->
+            <div sec:authorize="hasRole('HR_ADMIN')" class="flex items-center space-x-2">
+                <a th:href="@{/employees/{id}/edit(id=${employee.id})}"
+                   class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                    Edit Profile
+                </a>
+                <a th:href="@{/employees}"
+                   class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">
+                    Directory
+                </a>
+            </div>
+        </div>
+
+        <!-- Employment Details Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pt-6 text-sm">
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400 block">Work Email</span>
+                <span class="font-medium text-slate-800 mt-0.5 block"
+                      th:text="${employee.user != null ? employee.user.email : 'No system login linked'}">email</span>
+            </div>
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400 block">System Role / HR Code</span>
+                <span class="font-medium text-slate-800 mt-0.5 block"
+                      th:text="${employee.user != null ? employee.user.role + (employee.user.hrCode != null ? ' (' + employee.user.hrCode + ')' : '') : '—'}">EMPLOYEE</span>
+            </div>
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400 block">Phone Number</span>
+                <span class="font-medium text-slate-800 mt-0.5 block"
+                      th:text="${employee.phone != null and !employee.phone.isEmpty() ? employee.phone : '—'}">+91</span>
+            </div>
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400 block">Department</span>
+                <span class="font-medium text-slate-800 mt-0.5 block" th:text="${employee.department.name}">Engineering</span>
+            </div>
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400 block">Job Designation</span>
+                <span class="font-medium text-slate-800 mt-0.5 block"
+                      th:text="${employee.jobRole.title + ' (Level ' + employee.jobRole.level + ')'}">Role</span>
+            </div>
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400 block">Reports To</span>
+                <span class="font-medium text-slate-800 mt-0.5 block"
+                      th:text="${employee.reportsTo != null ? employee.reportsTo.fullName + ' (' + employee.reportsTo.employeeCode + ')' : 'Flat HR Structure (HR Admin)'}">Flat</span>
+            </div>
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400 block">Date of Joining</span>
+                <span class="font-mono text-slate-800 mt-0.5 block" th:text="${employee.dateOfJoining}">2024-01-01</span>
+            </div>
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400 block">Date of Birth</span>
+                <span class="font-mono text-slate-800 mt-0.5 block"
+                      th:text="${employee.dateOfBirth != null ? employee.dateOfBirth : '—'}">1995-01-01</span>
+            </div>
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400 block">Account Access</span>
+                <span class="font-medium mt-0.5 block"
+                      th:classappend="${employee.user != null and employee.user.active} ? 'text-emerald-700' : 'text-red-600'"
+                      th:text="${employee.user != null ? (employee.user.active ? 'Enabled' : 'Suspended') : 'No Login Account'}">Enabled</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Soft Deactivation Panel (HR_ADMIN only, when employee is not already INACTIVE) -->
+    <div sec:authorize="hasRole('HR_ADMIN')" th:if="${employee.status.name() != 'INACTIVE'}"
+         class="bg-white rounded-xl shadow-sm border border-red-200 p-6">
+        <h2 class="text-base font-bold text-red-800">Offboarding &amp; Soft Deactivation</h2>
+        <p class="text-xs text-slate-600 mt-1">
+            Sets status to <code class="font-mono">INACTIVE</code> while preserving all historical attendance, leave, and audit records (Section 6.2).
+        </p>
+
+        <form th:action="@{/employees/{id}/deactivate(id=${employee.id})}" method="post"
+              onsubmit="return confirm('Confirm soft-deactivation of ' + this.getAttribute('data-emp') + '?');"
+              th:attr="data-emp=${employee.fullName + ' (' + employee.employeeCode + ')'}"
+              class="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <input type="text" name="reason" required placeholder="Reason for deactivation (e.g. Resignation / Offboarding)..."
+                   class="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-red-500 focus:outline-none"/>
+            <label class="inline-flex items-center space-x-2 text-xs text-slate-700">
+                <input type="checkbox" name="suspendLogin" value="true" checked class="rounded border-slate-300"/>
+                <span>Suspend system login immediately</span>
+            </label>
+            <button type="submit"
+                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                Deactivate Employee
+            </button>
+        </form>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
