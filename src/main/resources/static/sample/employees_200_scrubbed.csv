@@ -1,0 +1,201 @@
+full_name,email,phone,department,job_role,date_of_birth,date_of_joining,role
+Aarav Sharma,emp001.import@company.com,+91-9810000001,Engineering,Software Engineer,1995-01-12,2024-01-15,EMPLOYEE
+Vivaan Verma,emp002.import@company.com,+91-9810000002,Engineering,Senior Software Engineer,1992-03-22,2023-06-01,EMPLOYEE
+Aditya Gupta,emp003.import@company.com,+91-9810000003,Engineering,QA Engineer,1996-07-19,2024-02-10,EMPLOYEE
+Vihaan Malhotra,emp004.import@company.com,+91-9810000004,Operations,Operations Analyst,1994-11-05,2023-09-12,EMPLOYEE
+Arjun Nair,emp005.import@company.com,+91-9810000005,Finance,Financial Analyst,1993-04-18,2023-04-03,EMPLOYEE
+Sai Iyer,emp006.import@company.com,+91-9810000006,Sales,Account Executive,1997-08-29,2024-03-11,EMPLOYEE
+Reyansh Joshi,emp007.import@company.com,+91-9810000007,Engineering,DevOps Engineer,1991-12-14,2022-11-20,EMPLOYEE
+Ayaan Kulkarni,emp008.import@company.com,+91-9810000008,Human Resources,HR Specialist,1993-06-30,2023-01-16,HR_ADMIN
+Krishna Desai,emp009.import@company.com,+91-9810000009,Product,Product Manager,1990-09-25,2022-07-01,EMPLOYEE
+Ishaan Mehta,emp010.import@company.com,+91-9810000010,Engineering,Software Engineer,1998-02-17,2024-04-01,EMPLOYEE
+Shaurya Reddy,emp011.import@company.com,+91-9810000011,Engineering,Software Engineer,1995-05-10,2023-08-14,EMPLOYEE
+Atharv Patel,emp012.import@company.com,+91-9810000012,Operations,Logistics Coordinator,1994-10-08,2023-05-22,EMPLOYEE
+Advik Chatterjee,emp013.import@company.com,+91-9810000013,Finance,Accountant,1996-01-21,2024-01-08,EMPLOYEE
+Pranav Banerjee,emp014.import@company.com,+91-9810000014,Sales,Sales Specialist,1997-03-14,2024-02-19,EMPLOYEE
+Advaith Mukherjee,emp015.import@company.com,+91-9810000015,Engineering,Backend Developer,1993-07-07,2023-03-15,EMPLOYEE
+Aaryan Das,emp016.import@company.com,+91-9810000016,Engineering,Frontend Developer,1996-11-11,2023-10-02,EMPLOYEE
+Dhruv Bose,emp017.import@company.com,+91-9810000017,Customer Support,Support Specialist,1998-04-04,2024-05-06,EMPLOYEE
+Kabir Sengupta,emp018.import@company.com,+91-9810000018,Product,UX Designer,1994-08-16,2023-07-17,EMPLOYEE
+Ritvik Ghosh,emp019.import@company.com,+91-9810000019,Engineering,Software Engineer,1995-12-28,2023-11-13,EMPLOYEE
+Aarush Dutta,emp020.import@company.com,+91-9810000020,Marketing,Marketing Specialist,1996-06-09,2024-01-22,EMPLOYEE
+Kian Rao,emp021.import@company.com,+91-9810000021,Engineering,Software Engineer,1995-02-11,2024-01-15,EMPLOYEE
+Darsh Menon,emp022.import@company.com,+91-9810000022,Engineering,Senior Software Engineer,1992-04-23,2023-06-05,EMPLOYEE
+Veer Pillai,emp023.import@company.com,+91-9810000023,Engineering,QA Engineer,1996-08-14,2024-02-12,EMPLOYEE
+Rohan Kapoor,emp024.import@company.com,+91-9810000024,Operations,Operations Analyst,1994-12-01,2023-09-18,EMPLOYEE
+Karthik Khanna,emp025.import@company.com,+91-9810000025,Finance,Financial Analyst,1993-05-19,2023-04-10,EMPLOYEE
+Nikhil Bhatia,emp026.import@company.com,+91-9810000026,Sales,Account Executive,1997-09-21,2024-03-18,EMPLOYEE
+Siddharth Chopra,emp027.import@company.com,+91-9810000027,Engineering,DevOps Engineer,1991-11-15,2022-11-25,EMPLOYEE
+Varun Arora,emp028.import@company.com,+91-9810000028,Human Resources,HR Coordinator,1995-06-28,2023-02-14,EMPLOYEE
+Abhinav Sethi,emp029.import@company.com,+91-9810000029,Product,Product Manager,1990-10-12,2022-07-15,EMPLOYEE
+Prateek Tiwari,emp030.import@company.com,+91-9810000030,Engineering,Software Engineer,1998-03-09,2024-04-08,EMPLOYEE
+Ananya Pandey,emp031.import@company.com,+91-9810000031,Engineering,Software Engineer,1995-05-18,2023-08-21,EMPLOYEE
+Diya Mishra,emp032.import@company.com,+91-9810000032,Operations,Logistics Coordinator,1994-10-15,2023-05-29,EMPLOYEE
+Saanvi Dubey,emp033.import@company.com,+91-9810000033,Finance,Accountant,1996-02-20,2024-01-12,EMPLOYEE
+Aadhya Saxena,emp034.import@company.com,+91-9810000034,Sales,Sales Specialist,1997-04-14,2024-02-26,EMPLOYEE
+Kiara Srivastava,emp035.import@company.com,+91-9810000035,Engineering,Backend Developer,1993-08-07,2023-03-20,EMPLOYEE
+Myra Yadav,emp036.import@company.com,+91-9810000036,Engineering,Frontend Developer,1996-12-11,2023-10-09,EMPLOYEE
+Pari Chauhan,emp037.import@company.com,+91-9810000037,Customer Support,Support Specialist,1998-05-04,2024-05-13,EMPLOYEE
+Anvi Rathore,emp038.import@company.com,+91-9810000038,Product,UX Designer,1994-09-16,2023-07-24,EMPLOYEE
+Riya Rajput,emp039.import@company.com,+91-9810000039,Engineering,Software Engineer,1995-11-28,2023-11-20,EMPLOYEE
+Navya Thakur,emp040.import@company.com,+91-9810000040,Marketing,Marketing Specialist,1996-07-09,2024-01-29,EMPLOYEE
+Meera Agarwal,emp041.import@company.com,+91-9810000041,Engineering,Software Engineer,1995-01-14,2024-01-16,EMPLOYEE
+Ira Singhal,emp042.import@company.com,+91-9810000042,Engineering,Senior Software Engineer,1992-03-24,2023-06-06,EMPLOYEE
+Kavya Goel,emp043.import@company.com,+91-9810000043,Engineering,QA Engineer,1996-07-21,2024-02-13,EMPLOYEE
+Avni Mittal,emp044.import@company.com,+91-9810000044,Operations,Operations Analyst,1994-11-07,2023-09-19,EMPLOYEE
+kriti Bansal,emp045.import@company.com,+91-9810000045,Finance,Financial Analyst,1993-04-20,2023-04-11,EMPLOYEE
+Nisha Jindal,emp046.import@company.com,+91-9810000046,Sales,Account Executive,1997-08-30,2024-03-19,EMPLOYEE
+Pooja Garg,emp047.import@company.com,+91-9810000047,Engineering,DevOps Engineer,1991-12-16,2022-11-28,EMPLOYEE
+Sneha Mahajan,emp048.import@company.com,+91-9810000048,Human Resources,HR Specialist,1993-06-25,2023-01-23,EMPLOYEE
+Tanvi Bhardwaj,emp049.import@company.com,+91-9810000049,Product,Product Manager,1990-09-27,2022-07-18,EMPLOYEE
+Shruti Dixit,emp050.import@company.com,+91-9810000050,Engineering,Software Engineer,1998-02-19,2024-04-09,EMPLOYEE
+Harsh Trivedi,emp051.import@company.com,+91-9810000051,Engineering,Software Engineer,1995-05-12,2023-08-22,EMPLOYEE
+Mayank Pathak,emp052.import@company.com,+91-9810000052,Operations,Logistics Coordinator,1994-10-10,2023-05-30,EMPLOYEE
+Gaurav Dwivedi,emp053.import@company.com,+91-9810000053,Finance,Accountant,1996-01-23,2024-01-17,EMPLOYEE
+Tushar Upadhyay,emp054.import@company.com,+91-9810000054,Sales,Sales Specialist,1997-03-16,2024-02-27,EMPLOYEE
+Deepak Chaturvedi,emp055.import@company.com,+91-9810000055,Engineering,Backend Developer,1993-07-09,2023-03-21,EMPLOYEE
+Manish Bhatt,emp056.import@company.com,+91-9810000056,Engineering,Frontend Developer,1996-11-13,2023-10-10,EMPLOYEE
+Saurabh Joshi,emp057.import@company.com,+91-9810000057,Customer Support,Support Specialist,1998-04-06,2024-05-14,EMPLOYEE
+Vikram Purohit,emp058.import@company.com,+91-9810000058,Product,UX Designer,1994-08-18,2023-07-25,EMPLOYEE
+Rajat Vyas,emp059.import@company.com,+91-9810000059,Engineering,Software Engineer,1995-12-30,2023-11-21,EMPLOYEE
+Akash Dave,emp060.import@company.com,+91-9810000060,Marketing,Marketing Specialist,1996-06-11,2024-01-30,EMPLOYEE
+Kunal Shah,emp061.import@company.com,+91-9810000061,Engineering,Software Engineer,1995-02-13,2024-01-18,EMPLOYEE
+Chirag Parikh,emp062.import@company.com,+91-9810000062,Engineering,Senior Software Engineer,1992-04-25,2023-06-07,EMPLOYEE
+Hardik Parekh,emp063.import@company.com,+91-9810000063,Engineering,QA Engineer,1996-08-16,2024-02-14,EMPLOYEE
+Jayesh Modi,emp064.import@company.com,+91-9810000064,Operations,Operations Analyst,1994-12-03,2023-09-20,EMPLOYEE
+Niraj Chokshi,emp065.import@company.com,+91-9810000065,Finance,Financial Analyst,1993-05-21,2023-04-12,EMPLOYEE
+Parth Thakkar,emp066.import@company.com,+91-9810000066,Sales,Account Executive,1997-09-23,2024-03-20,EMPLOYEE
+Yash Gandhi,emp067.import@company.com,+91-9810000067,Engineering,DevOps Engineer,1991-11-17,2022-11-29,EMPLOYEE
+Devang Vakil,emp068.import@company.com,+91-9810000068,Human Resources,HR Coordinator,1995-06-26,2023-02-15,EMPLOYEE
+Mihir Merchant,emp069.import@company.com,+91-9810000069,Product,Product Manager,1990-10-14,2022-07-19,EMPLOYEE
+Pranay Dalal,emp070.import@company.com,+91-9810000070,Engineering,Software Engineer,1998-03-11,2024-04-10,EMPLOYEE
+Neha Shinde,emp071.import@company.com,+91-9810000071,Engineering,Software Engineer,1995-05-20,2023-08-23,EMPLOYEE
+Swati Pawar,emp072.import@company.com,+91-9810000072,Operations,Logistics Coordinator,1994-10-17,2023-05-31,EMPLOYEE
+Pallavi Jadhav,emp073.import@company.com,+91-9810000073,Finance,Accountant,1996-02-22,2024-01-19,EMPLOYEE
+Amruta Deshmukh,emp074.import@company.com,+91-9810000074,Sales,Sales Specialist,1997-04-16,2024-02-28,EMPLOYEE
+Tejaswini Chavan,emp075.import@company.com,+91-9810000075,Engineering,Backend Developer,1993-08-09,2023-03-22,EMPLOYEE
+Manasi Gaikwad,emp076.import@company.com,+91-9810000076,Engineering,Frontend Developer,1996-12-13,2023-10-11,EMPLOYEE
+Sayali Kadam,emp077.import@company.com,+91-9810000077,Customer Support,Support Specialist,1998-05-06,2024-05-15,EMPLOYEE
+Prajakta Sawant,emp078.import@company.com,+91-9810000078,Product,UX Designer,1994-09-18,2023-07-26,EMPLOYEE
+Gauri Gokhale,emp079.import@company.com,+91-9810000079,Engineering,Software Engineer,1995-11-26,2023-11-22,EMPLOYEE
+Radhika Apte,emp080.import@company.com,+91-9810000080,Marketing,Marketing Specialist,1996-07-11,2024-01-31,EMPLOYEE
+OmkarBhosale,emp081.import@company.com,+91-9810000081,Engineering,Software Engineer,1995-01-16,2024-01-20,EMPLOYEE
+Sanket Mane,emp082.import@company.com,+91-9810000082,Engineering,Senior Software Engineer,1992-03-26,2023-06-08,EMPLOYEE
+TejasGokhale,emp083.import@company.com,+91-9810000083,Engineering,QA Engineer,1996-07-23,2024-02-15,EMPLOYEE
+Chinmay Bapat,emp084.import@company.com,+91-9810000084,Operations,Operations Analyst,1994-11-09,2023-09-21,EMPLOYEE
+Ninad Chitale,emp085.import@company.com,+91-9810000085,Finance,Financial Analyst,1993-04-22,2023-04-13,EMPLOYEE
+Ameya Phadke,emp086.import@company.com,+91-9810000086,Sales,Account Executive,1997-08-25,2024-03-21,EMPLOYEE
+MandarOak,emp087.import@company.com,+91-9810000087,Engineering,DevOps Engineer,1991-12-18,2022-11-30,EMPLOYEE
+Swapnil Marathe,emp088.import@company.com,+91-9810000088,Human Resources,HR Specialist,1993-06-23,2023-01-24,EMPLOYEE
+Nikhil Kelkar,emp089.import@company.com,+91-9810000089,Product,Product Manager,1990-09-29,2022-07-20,EMPLOYEE
+Rohan Sathe,emp090.import@company.com,+91-9810000090,Engineering,Software Engineer,1998-02-21,2024-04-11,EMPLOYEE
+Aravind Subramanian,emp091.import@company.com,+91-9810000091,Engineering,Software Engineer,1995-05-14,2023-08-24,EMPLOYEE
+Surya Narayanan,emp092.import@company.com,+91-9810000092,Operations,Logistics Coordinator,1994-10-12,2023-06-01,EMPLOYEE
+Vignesh Krishnan,emp093.import@company.com,+91-9810000093,Finance,Accountant,1996-01-25,2024-01-21,EMPLOYEE
+Harish Venkataraman,emp094.import@company.com,+91-9810000094,Sales,Sales Specialist,1997-03-18,2024-03-01,EMPLOYEE
+Ashwin Sundaram,emp095.import@company.com,+91-9810000095,Engineering,Backend Developer,1993-07-11,2023-03-23,EMPLOYEE
+Prashanth Raghavan,emp096.import@company.com,+91-9810000096,Engineering,Frontend Developer,1996-11-15,2023-10-12,EMPLOYEE
+Deepak Ramaswamy,emp097.import@company.com,+91-9810000097,Customer Support,Support Specialist,1998-04-08,2024-05-16,EMPLOYEE
+Naveen Balaji,emp098.import@company.com,+91-9810000098,Product,UX Designer,1994-08-20,2023-07-27,EMPLOYEE
+ganesh Natarajan,emp099.import@company.com,+91-9810000099,Engineering,Software Engineer,1995-12-25,2023-11-23,EMPLOYEE
+Karthikeyan Srinivasan,emp100.import@company.com,+91-9810000100,Marketing,Marketing Specialist,1996-06-13,2024-02-01,EMPLOYEE
+Divya Lakshmanan,emp101.import@company.com,+91-9810000101,Engineering,Software Engineer,1995-02-15,2024-01-22,EMPLOYEE
+Janani Chandrasekhar,emp102.import@company.com,+91-9810000102,Engineering,Senior Software Engineer,1992-04-27,2023-06-09,EMPLOYEE
+Keerthana Viswanathan,emp103.import@company.com,+91-9810000103,Engineering,QA Engineer,1996-08-18,2024-02-16,EMPLOYEE
+LavanyaSwaminathan,emp104.import@company.com,+91-9810000104,Operations,Operations Analyst,1994-12-05,2023-09-22,EMPLOYEE
+Mythili Rajagopal,emp105.import@company.com,+91-9810000105,Finance,Financial Analyst,1993-05-23,2023-04-14,EMPLOYEE
+Nithya Gopalakrishnan,emp106.import@company.com,+91-9810000106,Sales,Account Executive,1997-09-25,2024-03-22,EMPLOYEE
+Pavithra Jayaraman,emp107.import@company.com,+91-9810000107,Engineering,DevOps Engineer,1991-11-19,2022-12-01,EMPLOYEE
+Ramya Rangarajan,emp108.import@company.com,+91-9810000108,Human Resources,HR Coordinator,1995-06-24,2023-02-16,EMPLOYEE
+Saranya Parthasarathy,emp109.import@company.com,+91-9810000109,Product,Product Manager,1990-10-16,2022-07-21,EMPLOYEE
+Vidya Padmanabhan,emp110.import@company.com,+91-9810000110,Engineering,Software Engineer,1998-03-13,2024-04-12,EMPLOYEE
+Nitin Hegde,emp111.import@company.com,+91-9810000111,Engineering,Software Engineer,1995-05-22,2023-08-25,EMPLOYEE
+Pavan Kamath,emp112.import@company.com,+91-9810000112,Operations,Logistics Coordinator,1994-10-19,2023-06-02,EMPLOYEE
+chetan Pai,emp113.import@company.com,+91-9810000113,Finance,Accountant,1996-02-24,2024-01-23,EMPLOYEE
+Darshan Shenoy,emp114.import@company.com,+91-9810000114,Sales,Sales Specialist,1997-04-18,2024-03-02,EMPLOYEE
+Girish Bhat,emp115.import@company.com,+91-9810000115,Engineering,Backend Developer,1993-08-11,2023-03-24,EMPLOYEE
+Kiran Shetty,emp116.import@company.com,+91-9810000116,Engineering,Frontend Developer,1996-12-15,2023-10-13,EMPLOYEE
+Lokesh Nayak,emp117.import@company.com,+91-9810000117,Customer Support,Support Specialist,1998-05-08,2024-05-17,EMPLOYEE
+Manoj Prabhu,emp118.import@company.com,+91-9810000118,Product,UX Designer,1994-09-20,2023-07-28,EMPLOYEE
+Naveen Kini,emp119.import@company.com,+91-9810000119,Engineering,Software Engineer,1995-11-24,2023-11-24,EMPLOYEE
+Pramod Alva,emp120.import@company.com,+91-9810000120,Marketing,Marketing Specialist,1996-07-13,2024-02-02,EMPLOYEE
+Rakshitha Rai,emp121.import@company.com,+91-9810000121,Engineering,Software Engineer,1995-01-18,2024-01-24,EMPLOYEE
+Sahana Poojary,emp122.import@company.com,+91-9810000122,Engineering,Senior Software Engineer,1992-03-28,2023-06-12,EMPLOYEE
+Chaitra Gowda,emp123.import@company.com,+91-9810000123,Engineering,QA Engineer,1996-07-25,2024-02-17,EMPLOYEE
+Ashwini Murthy,emp124.import@company.com,+91-9810000124,Operations,Operations Analyst,1994-11-11,2023-09-25,EMPLOYEE
+Bhavana Nadkarni,emp125.import@company.com,+91-9810000125,Finance,Financial Analyst,1993-04-24,2023-04-17,EMPLOYEE
+Deepika Kulkarni,emp126.import@company.com,+91-9810000126,Sales,Account Executive,1997-08-27,2024-03-25,EMPLOYEE
+Harshitha Deshpande,emp127.import@company.com,+91-9810000127,Engineering,DevOps Engineer,1991-12-20,2022-12-05,EMPLOYEE
+Meghana Joshi,emp128.import@company.com,+91-9810000128,Human Resources,HR Specialist,1993-06-21,2023-01-25,EMPLOYEE
+Nandini Rao,emp129.import@company.com,+91-9810000129,Product,Product Manager,1990-09-23,2022-07-22,EMPLOYEE
+Rashmi Hegde,emp130.import@company.com,+91-9810000130,Engineering,Software Engineer,1998-02-23,2024-04-15,EMPLOYEE
+Gurpreet Singh,emp131.import@company.com,+91-9810000131,Engineering,Software Engineer,1995-05-16,2023-08-28,EMPLOYEE
+Harpreet Kaur,emp132.import@company.com,+91-9810000132,Operations,Logistics Coordinator,1994-10-14,2023-06-05,EMPLOYEE
+Manpreet Gill,emp133.import@company.com,+91-9810000133,Finance,Accountant,1996-01-27,2024-01-25,EMPLOYEE
+Jaspreet Sandhu,emp134.import@company.com,+91-9810000134,Sales,Sales Specialist,1997-03-20,2024-03-04,EMPLOYEE
+Amandeep Dhillon,emp135.import@company.com,+91-9810000135,Engineering,Backend Developer,1993-07-13,2023-03-27,EMPLOYEE
+gagandeep Sidhu,emp136.import@company.com,+91-9810000136,Engineering,Frontend Developer,1996-11-17,2023-10-16,EMPLOYEE
+Sukhpreet Brar,emp137.import@company.com,+91-9810000137,Customer Support,Support Specialist,1998-04-10,2024-05-20,EMPLOYEE
+Navjot Bajwa,emp138.import@company.com,+91-9810000138,Product,UX Designer,1994-08-22,2023-07-31,EMPLOYEE
+Simranjeet Grewal,emp139.import@company.com,+91-9810000139,Engineering,Software Engineer,1995-12-23,2023-11-27,EMPLOYEE
+Prabhjot Randhawa,emp140.import@company.com,+91-9810000140,Marketing,Marketing Specialist,1996-06-15,2024-02-05,EMPLOYEE
+Syed Ahmed,emp141.import@company.com,+91-9810000141,Engineering,Software Engineer,1995-02-17,2024-01-26,EMPLOYEE
+Mohammed Khan,emp142.import@company.com,+91-9810000142,Engineering,Senior Software Engineer,1992-04-29,2023-06-13,EMPLOYEE
+Zoya Sheikh,emp143.import@company.com,+91-9810000143,Engineering,QA Engineer,1996-08-20,2024-02-18,EMPLOYEE
+Sana Ansari,emp144.import@company.com,+91-9810000144,Operations,Operations Analyst,1994-12-07,2023-09-26,EMPLOYEE
+Farhan Siddiqui,emp145.import@company.com,+91-9810000145,Finance,Financial Analyst,1993-05-25,2023-04-18,EMPLOYEE
+Imran Qureshi,emp146.import@company.com,+91-9810000146,Sales,Account Executive,1997-09-27,2024-03-26,EMPLOYEE
+Tariq Mirza,emp147.import@company.com,+91-9810000147,Engineering,DevOps Engineer,1991-11-21,2022-12-06,EMPLOYEE
+Ayesha Pathan,emp148.import@company.com,+91-9810000148,Human Resources,HR Coordinator,1995-06-22,2023-02-17,EMPLOYEE
+Nida Sayed,emp149.import@company.com,+91-9810000149,Product,Product Manager,1990-10-18,2022-07-25,EMPLOYEE
+Rehan Usmani,emp150.import@company.com,+91-9810000150,Engineering,Software Engineer,1998-03-15,2024-04-16,EMPLOYEE
+John Mathew,emp151.import@company.com,+91-9810000151,Engineering,Software Engineer,1995-05-24,2023-08-29,EMPLOYEE
+Thomas George,emp152.import@company.com,+91-9810000152,Operations,Logistics Coordinator,1994-10-21,2023-06-06,EMPLOYEE
+Joseph Kurian,emp153.import@company.com,+91-9810000153,Finance,Accountant,1996-02-26,2024-01-29,EMPLOYEE
+Abraham Varghese,emp154.import@company.com,+91-9810000154,Sales,Sales Specialist,1997-04-20,2024-03-05,EMPLOYEE
+Jacob Philip,emp155.import@company.com,+91-9810000155,Engineering,Backend Developer,1993-08-13,2023-03-28,EMPLOYEE
+Sneha Chacko,emp156.import@company.com,+91-9810000156,Engineering,Frontend Developer,1996-12-17,2023-10-17,EMPLOYEE
+Anu Thomas,emp157.import@company.com,+91-9810000157,Customer Support,Support Specialist,1998-05-10,2024-05-21,EMPLOYEE
+Merin Joseph,emp158.import@company.com,+91-9810000158,Product,UX Designer,1994-09-22,2023-08-01,EMPLOYEE
+Riya Cherian,emp159.import@company.com,+91-9810000159,Engineering,Software Engineer,1995-11-22,2023-11-28,EMPLOYEE
+Neha Abraham,emp160.import@company.com,+91-9810000160,Marketing,Marketing Specialist,1996-07-15,2024-02-06,EMPLOYEE
+Saurav Ganguly,emp161.import@company.com,+91-9810000161,Engineering,Software Engineer,1995-01-20,2024-01-30,EMPLOYEE
+Subhajit Roy,emp162.import@company.com,+91-9810000162,Engineering,Senior Software Engineer,1992-03-30,2023-06-14,EMPLOYEE
+Arindam Sen,emp163.import@company.com,+91-9810000163,Engineering,QA Engineer,1996-07-27,2024-02-20,EMPLOYEE
+Debashish Mitra,emp164.import@company.com,+91-9810000164,Operations,Operations Analyst,1994-11-13,2023-09-27,EMPLOYEE
+Soumya Chakraborty,emp165.import@company.com,+91-9810000165,Finance,Financial Analyst,1993-04-26,2023-04-19,EMPLOYEE
+Sayan Bhattacharyya,emp166.import@company.com,+91-9810000166,Sales,Account Executive,1997-08-23,2024-03-27,EMPLOYEE
+Anirban Dey,emp167.import@company.com,+91-9810000167,Engineering,DevOps Engineer,1991-12-22,2022-12-07,EMPLOYEE
+Moumita Saha,emp168.import@company.com,+91-9810000168,Human Resources,HR Specialist,1993-06-19,2023-01-27,EMPLOYEE
+Poulami Paul,emp169.import@company.com,+91-9810000169,Product,Product Manager,1990-09-21,2022-07-26,EMPLOYEE
+Rupsha Majumdar,emp170.import@company.com,+91-9810000170,Engineering,Software Engineer,1998-02-25,2024-04-17,EMPLOYEE
+Bikash Mohanty,emp171.import@company.com,+91-9810000171,Engineering,Software Engineer,1995-05-26,2023-08-30,EMPLOYEE
+Chandan Patnaik,emp172.import@company.com,+91-9810000172,Operations,Logistics Coordinator,1994-10-23,2023-06-07,EMPLOYEE
+Debasis Mishra,emp173.import@company.com,+91-9810000173,Finance,Accountant,1996-02-28,2024-01-31,EMPLOYEE
+Manas Panda,emp174.import@company.com,+91-9810000174,Sales,Sales Specialist,1997-04-22,2024-03-06,EMPLOYEE
+Pradeep Sahoo,emp175.import@company.com,+91-9810000175,Engineering,Backend Developer,1993-08-15,2023-03-29,EMPLOYEE
+Subrat Behera,emp176.import@company.com,+91-9810000176,Engineering,Frontend Developer,1996-12-19,2023-10-18,EMPLOYEE
+Ipsita Dash,emp177.import@company.com,+91-9810000177,Customer Support,Support Specialist,1998-05-12,2024-05-22,EMPLOYEE
+Lopamudra Nayak,emp178.import@company.com,+91-9810000178,Product,UX Designer,1994-09-24,2023-08-02,EMPLOYEE
+Madhusmita Swain,emp179.import@company.com,+91-9810000179,Engineering,Software Engineer,1995-11-20,2023-11-29,EMPLOYEE
+SasmitaRath,emp180.import@company.com,+91-9810000180,Marketing,Marketing Specialist,1996-07-17,2024-02-07,EMPLOYEE
+Bhupen Hazarika,emp181.import@company.com,+91-9810000181,Engineering,Software Engineer,1995-01-22,2024-02-01,EMPLOYEE
+Pranjal Bora,emp182.import@company.com,+91-9810000182,Engineering,Senior Software Engineer,1992-03-15,2023-06-15,EMPLOYEE
+Manash Kalita,emp183.import@company.com,+91-9810000183,Engineering,QA Engineer,1996-07-29,2024-02-21,EMPLOYEE
+Nayan Saikia,emp184.import@company.com,+91-9810000184,Operations,Operations Analyst,1994-11-15,2023-09-28,EMPLOYEE
+DipankarGogoi,emp185.import@company.com,+91-9810000185,Finance,Financial Analyst,1993-04-28,2023-04-20,EMPLOYEE
+Himanshu Barua,emp186.import@company.com,+91-9810000186,Sales,Account Executive,1997-08-21,2024-03-28,EMPLOYEE
+Jatin Phukan,emp187.import@company.com,+91-9810000187,Engineering,DevOps Engineer,1991-12-24,2022-12-08,EMPLOYEE
+Pallabi Deka,emp188.import@company.com,+91-9810000188,Human Resources,HR Specialist,1993-06-17,2023-01-30,EMPLOYEE
+Barnali Dutta,emp189.import@company.com,+91-9810000189,Product,Product Manager,1990-09-19,2022-07-27,EMPLOYEE
+Pompi Sarma,emp190.import@company.com,+91-9810000190,Engineering,Software Engineer,1998-02-27,2024-04-18,EMPLOYEE
+Abhishek Sinha,emp191.import@company.com,+91-9810000191,Engineering,Software Engineer,1995-05-28,2023-08-31,EMPLOYEE
+Nishant Prasad,emp192.import@company.com,+91-9810000192,Operations,Logistics Coordinator,1994-10-25,2023-06-08,EMPLOYEE
+Prashant Jha,emp193.import@company.com,+91-9810000193,Finance,Accountant,1996-02-15,2024-02-02,EMPLOYEE
+Roshan Thakur,emp194.import@company.com,+91-9810000194,Sales,Sales Specialist,1997-04-24,2024-03-07,EMPLOYEE
+Shashank Choudhary,emp195.import@company.com,+91-9810000195,Engineering,Backend Developer,1993-08-17,2023-03-30,EMPLOYEE
+Ujjwal Kumar,emp196.import@company.com,+91-9810000196,Engineering,Frontend Developer,1996-12-21,2023-10-19,EMPLOYEE
+Archana Kumari,emp197.import@company.com,+91-9810000197,Customer Support,Support Specialist,1998-05-14,2024-05-23,EMPLOYEE
+Sweta Rani,emp198.import@company.com,+91-9810000198,Product,UX Designer,1994-09-26,2023-08-03,EMPLOYEE
+Ankita Singh,emp199.import@company.com,+91-9810000199,Engineering,Software Engineer,1995-11-18,2023-11-30,EMPLOYEE
+Priyanka Verma,emp200.import@company.com,+91-9810000200,Marketing,Marketing Specialist,1996-07-19,2024-02-08,EMPLOYEE

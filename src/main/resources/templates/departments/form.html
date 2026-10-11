@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Create Department')}"></head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+<header th:replace="~{fragments/layout :: navbar('departments')}"></header>
+
+<main class="max-w-2xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <div th:if="${errorMessage}" class="p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800 font-medium"
+         th:text="${errorMessage}"></div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-6">
+            <div>
+                <h1 class="text-lg font-bold text-slate-900">Create New Department</h1>
+                <p class="text-xs text-slate-500">Recorded in the audit trail as <code class="font-mono">DEPARTMENT_CREATED</code>.</p>
+            </div>
+            <a th:href="@{/departments}" class="text-xs font-semibold text-slate-500 hover:text-slate-800">&larr; Back</a>
+        </div>
+
+        <form th:action="@{/departments/new}" method="post" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Department Name *</label>
+                <input type="text" name="name" required placeholder="e.g. Finance &amp; Compliance"
+                       class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none"/>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Parent Department (Optional)</label>
+                <select name="parentDepartmentId"
+                        class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    <option value="">— Top-Level Department —</option>
+                    <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.name}">Dept</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Department Head (Informational Only)</label>
+                <select name="headEmployeeId"
+                        class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    <option value="">— Unassigned —</option>
+                    <option th:each="emp : ${activeEmployees}" th:value="${emp.id}"
+                            th:text="${emp.fullName + ' (' + emp.employeeCode + ')'}">Employee</option>
+                </select>
+            </div>
+
+            <div class="pt-4 flex justify-end space-x-3">
+                <a th:href="@{/departments}"
+                   class="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition">
+                    Create Department
+                </button>
+            </div>
+        </form>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${editMode ? 'Edit Employee' : 'Add Employee'})}"></head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+<header th:replace="~{fragments/layout :: navbar('employees')}"></header>
+
+<main class="max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <div th:if="${errorMessage}" class="p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800 font-medium"
+         th:text="${errorMessage}"></div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-6">
+            <div>
+                <h1 class="text-lg font-bold text-slate-900"
+                    th:text="${editMode ? 'Edit Employee: ' + employee.fullName + ' (' + employee.employeeCode + ')' : 'Onboard New Employee'}">
+                    Employee Form
+                </h1>
+                <p class="text-xs text-slate-500">
+                    <span th:if="${!editMode}">Allocates the next sequential <code class="font-mono">EMP-xxx</code> code and records <code class="font-mono">EMPLOYEE_CREATED</code>.</span>
+                    <span th:if="${editMode}">Captures field-level before/after JSONB snapshots under <code class="font-mono">EMPLOYEE_UPDATED</code>.</span>
+                </p>
+            </div>
+            <a th:href="@{/employees}" class="text-xs font-semibold text-slate-500 hover:text-slate-800">&larr; Back to Directory</a>
+        </div>
+
+        <form th:action="${editMode ? '/employees/' + employee.id + '/edit' : '/employees/new'}"
+              th:object="${employeeForm}" method="post" class="space-y-4">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Full Name *</label>
+                    <input type="text" th:field="*{fullName}" required placeholder="e.g. Rohan Verma"
+                           class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none"/>
+                    <p th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}" class="text-xs text-red-600 mt-1"></p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Phone Number</label>
+                    <input type="text" th:field="*{phone}" placeholder="+91-9876543210"
+                           class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none"/>
+                </div>
+            </div>
+
+            <!-- Account Creation Fields (shown when creating a new employee) -->
+            <div th:if="${!editMode}" class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-lg bg-slate-50 border border-slate-200">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Work Email (Login)</label>
+                    <input type="email" th:field="*{email}" placeholder="rohan@company.com"
+                           class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none"/>
+                    <p th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="text-xs text-red-600 mt-1"></p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Initial Password</label>
+                    <input type="password" th:field="*{password}" placeholder="Leave blank for default initial password"
+                           class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none"/>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">System Role</label>
+                    <select th:field="*{systemRole}"
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                        <option value="EMPLOYEE">EMPLOYEE (Self-Service)</option>
+                        <option value="HR_ADMIN">HR_ADMIN (Auto-assigns HR-xxx)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Department *</label>
+                    <select th:field="*{departmentId}" required
+                            class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                        <option value="">— Select Department —</option>
+                        <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.name}">Dept</option>
+                    </select>
+                    <p th:if="${#fields.hasErrors('departmentId')}" th:errors="*{departmentId}" class="text-xs text-red-600 mt-1"></p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Job Role *</label>
+                    <select th:field="*{jobRoleId}" required
+                            class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                        <option value="">— Select Job Role —</option>
+                        <option th:each="jr : ${jobRoles}" th:value="${jr.id}"
+                                th:text="${jr.title + ' (' + jr.department.name + ' · L' + jr.level + ')'}">Role</option>
+                    </select>
+                    <p th:if="${#fields.hasErrors('jobRoleId')}" th:errors="*{jobRoleId}" class="text-xs text-red-600 mt-1"></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Date of Joining *</label>
+                    <input type="date" th:field="*{dateOfJoining}" required
+                           class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none"/>
+                    <p th:if="${#fields.hasErrors('dateOfJoining')}" th:errors="*{dateOfJoining}" class="text-xs text-red-600 mt-1"></p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Date of Birth</label>
+                    <input type="date" th:field="*{dateOfBirth}"
+                           class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none"/>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Employment Status</label>
+                    <select th:field="*{status}"
+                            class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                        <option th:each="st : ${statuses}" th:value="${st}" th:text="${st}">ACTIVE</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-600 mb-1">Reports To (Optional — Future Managerial Hierarchy)</label>
+                <select th:field="*{reportsToId}"
+                        class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    <option value="">— Flat Structure (Direct to HR Admin) —</option>
+                    <option th:each="mgr : ${activeEmployees}" th:value="${mgr.id}"
+                            th:text="${mgr.fullName + ' (' + mgr.employeeCode + ')'}">Manager</option>
+                </select>
+            </div>
+
+            <div class="pt-4 flex justify-end space-x-3">
+                <a th:href="@{/employees}"
+                   class="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition"
+                        th:text="${editMode ? 'Save Changes' : 'Create Employee'}">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

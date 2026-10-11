@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+<header th:replace="~{fragments/layout :: navbar('dashboard')}"></header>
+
+<main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <!-- Flash Alerts -->
+    <div th:if="${successMessage}" class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 font-medium"
+         th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800 font-medium"
+         th:text="${errorMessage}"></div>
+
+    <!-- Header Banner -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900">
+                Welcome, <span th:text="${principal.email}">user@company.com</span>
+            </h1>
+            <p class="text-sm text-slate-500 mt-1">
+                Role: <span class="font-semibold text-slate-700" th:text="${principal.role}">ROLE</span>
+                <span th:if="${principal.hrCode != null}" class="ml-2 px-2 py-0.5 text-xs font-mono font-semibold bg-blue-50 text-blue-700 rounded border border-blue-200"
+                      th:text="'HR Code: ' + ${principal.hrCode}">HR-001</span>
+                <span class="ml-2 text-xs text-slate-400 font-mono"
+                      th:text="'Session ID: ' + ${currentSessionId}">SESSION_ID</span>
+            </p>
+        </div>
+
+        <!-- Week 2 Gate Action: Available ONLY to HR_ADMIN (Absent from DOM for SUPER_ADMIN & EMPLOYEE per Section 9.4) -->
+        <div sec:authorize="hasRole('HR_ADMIN')">
+            <form th:action="@{/audit/verify-dummy}" method="post" class="flex items-center space-x-2">
+                <input type="text" name="note" placeholder="Audit verification note..."
+                       value="Phase 1 Week 2 Gate Check"
+                       class="px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600"/>
+                <button type="submit"
+                        class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                    Trigger Audited Action (Week 2 Gate)
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Headline Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Active Employees</p>
+            <p class="text-3xl font-bold text-slate-900 mt-2" th:text="${activeEmployees}">2</p>
+            <p class="text-xs text-slate-400 mt-1" th:text="'Total records: ' + ${totalEmployees}">Total records: 2</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Departments</p>
+            <p class="text-3xl font-bold text-slate-900 mt-2" th:text="${totalDepartments}">3</p>
+            <p class="text-xs text-slate-400 mt-1">Organizational units</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Tracked Sessions</p>
+            <p class="text-3xl font-bold text-slate-900 mt-2" th:text="${#lists.size(sessions)}">1</p>
+            <p class="text-xs text-slate-400 mt-1">Persisted in PostgreSQL (Spring Session JDBC)</p>
+        </div>
+    </div>
+
+    <!-- Employee Self-Service Card (Visible to EMPLOYEE role) -->
+    <div sec:authorize="hasRole('EMPLOYEE') and !hasRole('HR_ADMIN')" th:if="${myEmployeeProfile != null}"
+         class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <h2 class="text-base font-bold text-slate-900 mb-4">My Employee Profile</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+            <div>
+                <span class="text-xs text-slate-500 block">Employee Code</span>
+                <span class="font-mono font-semibold text-slate-800" th:text="${myEmployeeProfile.employeeCode}">EMP-002</span>
+            </div>
+            <div>
+                <span class="text-xs text-slate-500 block">Full Name</span>
+                <span class="font-semibold text-slate-800" th:text="${myEmployeeProfile.fullName}">Aarav Mehta</span>
+            </div>
+            <div>
+                <span class="text-xs text-slate-500 block">Status</span>
+                <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded bg-blue-50 text-blue-700 border border-blue-200"
+                      th:text="${myEmployeeProfile.status}">ACTIVE</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Trail Preview (Visible ONLY to SUPER_ADMIN & HR_ADMIN) -->
+    <div sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
+         class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+            <div>
+                <h2 class="text-base font-bold text-slate-900">Immutable Audit Trail (Recent Entries)</h2>
+                <p class="text-xs text-slate-500">
+                    <span sec:authorize="hasRole('SUPER_ADMIN')">Super Admin Oversight: Viewing all HR Admin actions</span>
+                    <span sec:authorize="hasRole('HR_ADMIN')">HR Admin View: Showing actions attributed to your sessions</span>
+                </p>
+            </div>
+            <a th:href="@{/audit}" class="text-xs font-semibold text-blue-600 hover:text-blue-800">View Full Audit Log &rarr;</a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold">
+                <tr>
+                    <th class="px-4 py-3 text-left">Timestamp</th>
+                    <th class="px-4 py-3 text-left">Actor</th>
+                    <th class="px-4 py-3 text-left">HR Code</th>
+                    <th class="px-4 py-3 text-left">Action</th>
+                    <th class="px-4 py-3 text-left">Target</th>
+                    <th class="px-4 py-3 text-left">Session ID</th>
+                    <th class="px-4 py-3 text-left">IP Address</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                <tr th:if="${#lists.isEmpty(recentAudits)}">
+                    <td colspan="7" class="px-4 py-6 text-center text-slate-400 text-xs">
+                        No audit entries recorded yet. Sign in as HR Admin (<code class="font-mono">hr1@company.com</code>) and click "Trigger Audited Action" above.
+                    </td>
+                </tr>
+                <tr th:each="entry : ${recentAudits}" class="hover:bg-slate-50">
+                    <td class="px-4 py-3 font-mono text-xs text-slate-600" th:text="${entry.occurredAt}">2026-10-08T14:00:00Z</td>
+                    <td class="px-4 py-3 font-medium text-slate-800" th:text="${entry.user.email}">hr1@company.com</td>
+                    <td class="px-4 py-3 font-mono text-xs text-blue-700" th:text="${entry.hrCode != null ? entry.hrCode : '—'}">HR-001</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-0.5 text-xs font-semibold rounded bg-amber-50 text-amber-800 border border-amber-200"
+                              th:text="${entry.action}">AUDIT_FOUNDATION_VERIFIED</span>
+                    </td>
+                    <td class="px-4 py-3 text-xs text-slate-600" th:text="${entry.targetType + ' (' + entry.targetId + ')'}">Target</td>
+                    <td class="px-4 py-3 font-mono text-xs text-slate-500" th:text="${#strings.abbreviate(entry.sessionId, 16)}">sess</td>
+                    <td class="px-4 py-3 font-mono text-xs text-slate-500" th:text="${entry.ipAddress}">127.0.0.1</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

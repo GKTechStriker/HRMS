@@ -4,12 +4,14 @@
 spring:
   application:
     name: hrms-app
+  config:
+    import: optional:file:.env[.properties]
   
   # Database Configuration — SEPARATE from old Python project's hrms_db
   # Old database (hrms_db) remains untouched
   datasource:
-    url: jdbc:postgresql://localhost:5432/hrms_springboot
-    username: hrms_spring
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/hrms_springboot}
+    username: ${DB_USERNAME:hrms_spring}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
@@ -45,14 +47,37 @@ spring:
     enabled: true
     validate-on-migrate: true
 
+  # Spring Session JDBC Configuration (Section 6.1 & 7.1)
+  session:
+    timeout: 30m
+    jdbc:
+      initialize-schema: never
+      table-name: SPRING_SESSION
+
 # Server Configuration
 server:
-  port: 8080
+  port: ${PORT:8080}
   servlet:
     context-path: /
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        same-site: strict
   compression:
     enabled: true
     min-response-size: 1024
+
+# HRMS Custom Security & Session Settings (Section 6.1)
+hrms:
+  session:
+    absolute-timeout-hours: ${HRMS_SESSION_ABSOLUTE_TIMEOUT_HOURS:8}
+  seed:
+    enabled: ${HRMS_SEED_ENABLED:true}
+  demo-hints:
+    enabled: ${HRMS_DEMO_HINTS_ENABLED:true}
+  security:
+    default-initial-password: ${HRMS_DEFAULT_USER_PASSWORD}
 
 # Logging Configuration
 logging:

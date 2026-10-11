@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${title} + ' · Enterprise HRMS'">Enterprise HRMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+<!-- Shared Top & Role-Aware Navigation Fragment (Section 3.2 & Section 9.4) -->
+<header th:fragment="navbar(activeTab)" class="bg-slate-900 text-white border-b border-slate-800 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <!-- Brand & Role-Aware Nav Links -->
+            <div class="flex items-center space-x-6">
+                <a th:href="@{/dashboard}" class="flex items-center space-x-2.5">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-blue-600 font-bold text-sm tracking-tight">HR</span>
+                    <span class="font-semibold text-lg tracking-tight">Enterprise HRMS</span>
+                </a>
+
+                <nav class="hidden md:flex items-center space-x-1 text-sm font-medium">
+                    <a th:href="@{/dashboard}"
+                       th:classappend="${activeTab == 'dashboard'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
+                       class="px-3 py-2 rounded-md transition">
+                        Dashboard
+                    </a>
+
+                    <!-- Employee Directory visible to SUPER_ADMIN and HR_ADMIN -->
+                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
+                       th:href="@{/employees}"
+                       th:classappend="${activeTab == 'employees'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
+                       class="px-3 py-2 rounded-md transition">
+                        Employees
+                    </a>
+
+                    <!-- Departments & Org Structure visible to SUPER_ADMIN and HR_ADMIN -->
+                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
+                       th:href="@{/departments}"
+                       th:classappend="${activeTab == 'departments'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
+                       class="px-3 py-2 rounded-md transition">
+                        Departments
+                    </a>
+
+                    <!-- Self-Service My Profile link for EMPLOYEE role -->
+                    <a sec:authorize="hasRole('EMPLOYEE') and !hasRole('HR_ADMIN')"
+                       th:href="@{/employees/me}"
+                       th:classappend="${activeTab == 'employees'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
+                       class="px-3 py-2 rounded-md transition">
+                        My Profile
+                    </a>
+
+                    <!-- Audit Trail visible ONLY to SUPER_ADMIN and HR_ADMIN (Section 4.2) -->
+                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
+                       th:href="@{/audit}"
+                       th:classappend="${activeTab == 'audit'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
+                       class="px-3 py-2 rounded-md transition">
+                        Audit Trail
+                    </a>
+
+                    <!-- Active Sessions visible to all authenticated users (scoped by role) -->
+                    <a th:href="@{/sessions}"
+                       th:classappend="${activeTab == 'sessions'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
+                       class="px-3 py-2 rounded-md transition">
+                        Sessions
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Right Side User Context & Logout -->
+            <div class="flex items-center space-x-4 text-sm" sec:authorize="isAuthenticated()">
+                <div class="flex items-center space-x-2">
+                    <span class="text-slate-300 font-medium" sec:authentication="name">user@company.com</span>
+                    <span sec:authorize="hasRole('SUPER_ADMIN')"
+                          class="px-2 py-0.5 text-xs font-semibold rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        SUPER_ADMIN (Oversight)
+                    </span>
+                    <span sec:authorize="hasRole('HR_ADMIN')"
+                          class="px-2 py-0.5 text-xs font-semibold rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                        HR_ADMIN
+                    </span>
+                    <span sec:authorize="hasRole('EMPLOYEE') and !hasRole('HR_ADMIN')"
+                          class="px-2 py-0.5 text-xs font-semibold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        EMPLOYEE
+                    </span>
+                </div>
+
+                <form th:action="@{/logout}" method="post" class="inline">
+                    <button type="submit"
+                            class="px-3 py-1.5 text-xs font-medium rounded bg-slate-800 hover:bg-red-600/90 text-slate-200 hover:text-white border border-slate-700 transition">
+                        Sign Out
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</header>
+
+<footer th:fragment="footer" class="mt-auto border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
+    Enterprise HRMS v2.0 · Java 25 · Spring Boot 4.1 · PostgreSQL · Session-Linked Immutable Audit Trail
+</footer>
+
+</body>
+</html>
