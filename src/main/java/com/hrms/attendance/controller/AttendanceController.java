@@ -55,7 +55,7 @@ public class AttendanceController {
                                @RequestParam(required = false) Integer year,
                                @RequestParam(required = false) Integer month,
                                Model model) {
-        UUID userId = userDetails.getUser().getId();
+        UUID userId = userDetails.getUserId();
         Optional<Employee> empOpt = employeeRepository.findByUserId(userId);
 
         LocalDate now = LocalDate.now();
@@ -93,7 +93,7 @@ public class AttendanceController {
                           RedirectAttributes redirectAttributes) {
         try {
             String clientIp = extractClientIp(request);
-            attendanceService.clockIn(userDetails.getUser().getId(), workMode, clientIp, notes);
+            attendanceService.clockIn(userDetails.getUserId(), workMode, clientIp, notes);
             redirectAttributes.addFlashAttribute("successMessage", "Clocked in successfully! Have a productive day.");
         } catch (BusinessException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
@@ -111,7 +111,7 @@ public class AttendanceController {
                            RedirectAttributes redirectAttributes) {
         try {
             String clientIp = extractClientIp(request);
-            attendanceService.clockOut(userDetails.getUser().getId(), clientIp, notes);
+            attendanceService.clockOut(userDetails.getUserId(), clientIp, notes);
             redirectAttributes.addFlashAttribute("successMessage", "Clocked out successfully! Total work duration recorded.");
         } catch (BusinessException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
@@ -160,7 +160,7 @@ public class AttendanceController {
         }
 
         try {
-            attendanceService.correctAttendance(dto, userDetails.getUser().getId());
+            attendanceService.correctAttendance(dto, userDetails.getUserId());
             redirectAttributes.addFlashAttribute("successMessage",
                     "Attendance record corrected successfully and logged to the audit trail.");
         } catch (Exception ex) {

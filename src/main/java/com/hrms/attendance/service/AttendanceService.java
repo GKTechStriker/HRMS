@@ -89,10 +89,9 @@ public class AttendanceService {
         LocalTime localTime = now.toLocalTime();
 
         // Determine if arriving late (after 09:15 AM)
-        AttendanceStatus initialStatus = AttendanceStatus.PRESENT;
-        if (localTime.isAfter(LATE_THRESHOLD_TIME)) {
-            initialStatus = AttendanceStatus.LATE;
-        }
+        AttendanceStatus initialStatus = localTime.isAfter(LATE_THRESHOLD_TIME)
+                ? AttendanceStatus.LATE
+                : AttendanceStatus.PRESENT;
 
         AttendanceRecord record = existingOpt.orElseGet(() -> new AttendanceRecord(employee, today, initialStatus, workMode));
         record.setStatus(initialStatus);

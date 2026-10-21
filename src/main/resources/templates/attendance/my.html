@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      th:replace="~{fragments/layout :: layout(~{::title}, ~{::content})}">
-<head>
-    <title>My Attendance - HRMS</title>
-</head>
-<body>
-<div th:fragment="content" class="space-y-6">
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('My Attendance')}"></head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+<header th:replace="~{fragments/layout :: navbar('my-attendance')}"></header>
+
+<main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
     <!-- Flash Messages -->
     <div th:if="${successMessage}" class="p-4 rounded-lg bg-green-50 border border-green-200 text-green-800 flex items-center justify-between">
@@ -281,7 +281,9 @@
         </div>
     </div>
 
-</div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 
 <!-- Realtime Clock Script -->
 <script>

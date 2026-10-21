@@ -3,6 +3,7 @@ package com.hrms.attendance.repository;
 import com.hrms.attendance.entity.AttendanceRecord;
 import com.hrms.attendance.entity.AttendanceStatus;
 import com.hrms.employee.entity.Employee;
+import com.hrms.employee.entity.EmployeeStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
