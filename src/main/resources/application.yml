@@ -78,6 +78,8 @@ hrms:
     enabled: ${HRMS_DEMO_HINTS_ENABLED:true}
   security:
     default-initial-password: ${HRMS_DEFAULT_USER_PASSWORD}
+  attendance:
+    finalizer-cron: ${HRMS_ATTENDANCE_FINALIZER_CRON:0 59 23 * * MON-FRI}
 
 # Logging Configuration
 logging:

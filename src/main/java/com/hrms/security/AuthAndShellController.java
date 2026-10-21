@@ -30,17 +30,20 @@ public class AuthAndShellController {
     private final DepartmentRepository departmentRepository;
     private final SessionManagementService sessionManagementService;
     private final AuditService auditService;
+    private final com.hrms.attendance.service.AttendanceService attendanceService;
     private final boolean demoHintsEnabled;
 
     public AuthAndShellController(EmployeeRepository employeeRepository,
                                   DepartmentRepository departmentRepository,
                                   SessionManagementService sessionManagementService,
                                   AuditService auditService,
+                                  com.hrms.attendance.service.AttendanceService attendanceService,
                                   @org.springframework.beans.factory.annotation.Value("${hrms.demo-hints.enabled:true}") boolean demoHintsEnabled) {
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
         this.sessionManagementService = sessionManagementService;
         this.auditService = auditService;
+        this.attendanceService = attendanceService;
         this.demoHintsEnabled = demoHintsEnabled;
     }
 
@@ -65,6 +68,9 @@ public class AuthAndShellController {
         model.addAttribute("activeEmployees", employeeRepository.countByStatus(EmployeeStatus.ACTIVE));
         model.addAttribute("totalDepartments", departmentRepository.count());
         model.addAttribute("sessions", sessionManagementService.getSessionsForPrincipal(principal));
+
+        attendanceService.getTodayRecord(principal.getUserId())
+                .ifPresent(att -> model.addAttribute("todayAttendance", att));
 
         if (principal.getRole() == Role.SUPER_ADMIN || principal.getRole() == Role.HR_ADMIN) {
             model.addAttribute("recentAudits", auditService.getRecentAuditLogsForPrincipal(principal, 10));

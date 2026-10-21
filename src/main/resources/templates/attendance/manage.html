@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::content})}">
+<head>
+    <title>Daily Attendance Management - HRMS</title>
+</head>
+<body>
+<div th:fragment="content" class="space-y-6">
+
+    <!-- Flash Messages -->
+    <div th:if="${successMessage}" class="p-4 rounded-lg bg-green-50 border border-green-200 text-green-800 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            <span th:text="${successMessage}" class="font-medium"></span>
+        </div>
+    </div>
+    <div th:if="${errorMessage}" class="p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            <span th:text="${errorMessage}" class="font-medium"></span>
+        </div>
+    </div>
+
+    <!-- Page Header & Filter Form -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Attendance Oversight</h1>
+            <p class="text-sm text-slate-500 mt-1">Review daily organizational punches, absence tracking, and audited corrections.</p>
+        </div>
+
+        <form th:action="@{/attendance/manage}" method="get" class="flex flex-wrap items-center gap-3">
+            <div>
+                <input type="date" name="date" th:value="${selectedDate}"
+                       class="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+                <select name="departmentId" class="px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">All Departments</option>
+                    <option th:each="dept : ${departments}"
+                            th:value="${dept.id}"
+                            th:selected="${dept.id == selectedDepartmentId}"
+                            th:text="${dept.name}">
+                    </option>
+                </select>
+            </div>
+            <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition shadow-sm">
+                Filter
+            </button>
+        </form>
+    </div>
+
+    <!-- Summary Metrics Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+            <p class="text-xs font-semibold text-slate-500 uppercase">Active Staff</p>
+            <p class="text-2xl font-bold text-slate-800 mt-1" th:text="${summary.totalActiveEmployees}">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+            <p class="text-xs font-semibold text-emerald-600 uppercase">Present</p>
+            <p class="text-2xl font-bold text-emerald-700 mt-1" th:text="${summary.presentCount}">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+            <p class="text-xs font-semibold text-amber-600 uppercase">Late Arrival</p>
+            <p class="text-2xl font-bold text-amber-700 mt-1" th:text="${summary.lateCount}">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+            <p class="text-xs font-semibold text-orange-600 uppercase">Half Day</p>
+            <p class="text-2xl font-bold text-orange-700 mt-1" th:text="${summary.halfDayCount}">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+            <p class="text-xs font-semibold text-rose-600 uppercase">Absent</p>
+            <p class="text-2xl font-bold text-rose-700 mt-1" th:text="${summary.absentCount}">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+            <p class="text-xs font-semibold text-blue-600 uppercase">On Leave</p>
+            <p class="text-2xl font-bold text-blue-700 mt-1" th:text="${summary.onLeaveCount}">0</p>
+        </div>
+    </div>
+
+    <!-- Attendance Roster Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">
+                    Daily Roster for <span class="text-indigo-600" th:text="${#temporals.format(selectedDate, 'EEEE, dd MMMM yyyy')}"></span>
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5">Showing logged attendance punches and automated absences</p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full"
+                  th:text="${#lists.size(records)} + ' Records logged'"></span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-600">
+                <thead class="bg-slate-50 border-b border-slate-200 text-xs uppercase font-semibold text-slate-500">
+                <tr>
+                    <th class="py-3 px-4">Employee</th>
+                    <th class="py-3 px-4">Department</th>
+                    <th class="py-3 px-4">Mode</th>
+                    <th class="py-3 px-4">Clock In</th>
+                    <th class="py-3 px-4">Clock Out</th>
+                    <th class="py-3 px-4">Duration</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4">Audit Note</th>
+                    <th class="py-3 px-4 text-right" sec:authorize="hasRole('HR_ADMIN')">Action</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                <tr th:if="${#lists.isEmpty(records)}">
+                    <td colspan="9" class="py-8 text-center text-slate-400 text-sm">
+                        No attendance records found for this date.
+                    </td>
+                </tr>
+                <tr th:each="record : ${records}" class="hover:bg-slate-50 transition">
+                    <td class="py-3 px-4">
+                        <div class="font-medium text-slate-800" th:text="${record.employee.fullName}"></div>
+                        <div class="text-xs font-mono text-slate-400" th:text="${record.employee.employeeCode}"></div>
+                    </td>
+                    <td class="py-3 px-4 text-xs text-slate-600"
+                        th:text="${record.employee.department != null ? record.employee.department.name : '-'}">
+                    </td>
+                    <td class="py-3 px-4 text-xs">
+                        <span th:text="${record.workMode.displayName}"></span>
+                    </td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-700"
+                        th:text="${record.clockIn != null ? #temporals.format(record.clockIn, 'hh:mm a') : '-'}"></td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-700"
+                        th:text="${record.clockOut != null ? #temporals.format(record.clockOut, 'hh:mm a') : '-'}"></td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-700">
+                        <span th:if="${record.durationMinutes != null}"
+                              th:text="${(record.durationMinutes / 60) + 'h ' + (record.durationMinutes % 60) + 'm'}"></span>
+                        <span th:if="${record.durationMinutes == null}">-</span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span th:text="${record.status.displayName}"
+                              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                              th:classappend="${record.status.name() == 'PRESENT' ? 'bg-green-100 text-green-800' :
+                                              (record.status.name() == 'LATE' ? 'bg-amber-100 text-amber-800' :
+                                              (record.status.name() == 'HALF_DAY' ? 'bg-orange-100 text-orange-800' :
+                                              (record.status.name() == 'ON_LEAVE' ? 'bg-blue-100 text-blue-800' :
+                                              (record.status.name() == 'HOLIDAY' ? 'bg-purple-100 text-purple-800' : 'bg-red-100 text-red-800'))))}">
+                        </span>
+                        <span th:if="${record.manuallyCorrected}"
+                              class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-slate-200 text-slate-700 font-mono"
+                              title="Manually adjusted by HR Admin">
+                            Adjusted
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-xs text-slate-500 max-w-xs truncate"
+                        th:text="${record.correctionReason != null ? record.correctionReason : (record.notes != null ? record.notes : '-')}"></td>
+                    <td class="py-3 px-4 text-right" sec:authorize="hasRole('HR_ADMIN')">
+                        <button type="button"
+                                class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-md transition"
+                                th:data-record-id="${record.id}"
+                                th:data-emp-id="${record.employee.id}"
+                                th:data-emp-name="${record.employee.fullName}"
+                                th:data-date="${record.workDate}"
+                                th:data-status="${record.status}"
+                                th:data-mode="${record.workMode}"
+                                th:data-in="${record.clockIn != null ? #temporals.format(record.clockIn, 'HH:mm') : ''}"
+                                th:data-out="${record.clockOut != null ? #temporals.format(record.clockOut, 'HH:mm') : ''}"
+                                th:data-reason="${record.correctionReason != null ? record.correctionReason : ''}"
+                                onclick="openCorrectionModal(this)">
+                            Correct
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Manual Attendance Correction Modal (for HR Admin) -->
+    <div id="correctionModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-200">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <h3 class="text-lg font-bold text-slate-800">Manual Attendance Correction</h3>
+                <button type="button" onclick="closeCorrectionModal()" class="text-slate-400 hover:text-slate-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <form th:action="@{/attendance/correct}" method="post" th:object="${correctionDto}" class="space-y-4">
+                <input type="hidden" id="modalRecordId" name="recordId">
+                <input type="hidden" id="modalEmployeeId" name="employeeId">
+                <input type="hidden" id="modalWorkDate" name="workDate">
+
+                <div class="p-3 bg-slate-50 rounded-lg text-xs text-slate-600">
+                    <p>Employee: <strong id="modalEmpName" class="text-slate-800"></strong></p>
+                    <p class="mt-1">Work Date: <span id="modalDateLabel" class="font-mono text-slate-700"></span></p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Status</label>
+                    <select id="modalStatus" name="status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option th:each="st : ${statuses}" th:value="${st}" th:text="${st.displayName}"></option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Work Mode</label>
+                    <select id="modalWorkMode" name="workMode" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option th:each="wm : ${workModes}" th:value="${wm}" th:text="${wm.displayName}"></option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Clock In (HH:mm)</label>
+                        <input type="time" id="modalClockIn" name="clockInTime"
+                               class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Clock Out (HH:mm)</label>
+                        <input type="time" id="modalClockOut" name="clockOutTime"
+                               class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
+                        Mandatory Correction Reason <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea id="modalReason" name="reason" rows="2" required
+                              placeholder="e.g. Employee forgot to punch out due to system outage. Verified via manager."
+                              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    <p class="text-[11px] text-slate-400 mt-1">This explanation will be permanently recorded in the append-only audit log.</p>
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeCorrectionModal()"
+                            class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 hover:bg-slate-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition shadow-sm">
+                        Save Correction & Audit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal Control Script -->
+<script>
+    function openCorrectionModal(btn) {
+        document.getElementById('modalRecordId').value = btn.getAttribute('data-record-id') || '';
+        document.getElementById('modalEmployeeId').value = btn.getAttribute('data-emp-id');
+        document.getElementById('modalWorkDate').value = btn.getAttribute('data-date');
+        document.getElementById('modalEmpName').textContent = btn.getAttribute('data-emp-name');
+        document.getElementById('modalDateLabel').textContent = btn.getAttribute('data-date');
+        document.getElementById('modalStatus').value = btn.getAttribute('data-status');
+        document.getElementById('modalWorkMode').value = btn.getAttribute('data-mode') || 'ON_SITE';
+        document.getElementById('modalClockIn').value = btn.getAttribute('data-in') || '';
+        document.getElementById('modalClockOut').value = btn.getAttribute('data-out') || '';
+        document.getElementById('modalReason').value = btn.getAttribute('data-reason') || '';
+
+        document.getElementById('correctionModal').classList.remove('hidden');
+    }
+
+    function closeCorrectionModal() {
+        document.getElementById('correctionModal').classList.add('hidden');
+    }
+</script>
+</body>
+</html>
