@@ -51,6 +51,19 @@
                         My Profile
                     </a>
 
+                    <!-- Attendance: Self-Service & HR Management -->
+                    <a th:href="@{/attendance/my}"
+                       th:classappend="${activeTab == 'my-attendance'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
+                       class="px-3 py-2 rounded-md transition">
+                        My Attendance
+                    </a>
+                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
+                       th:href="@{/attendance/manage}"
+                       th:classappend="${activeTab == 'manage-attendance'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
+                       class="px-3 py-2 rounded-md transition">
+                        Attendance Roster
+                    </a>
+
                     <!-- Audit Trail visible ONLY to SUPER_ADMIN and HR_ADMIN (Section 4.2) -->
                     <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
                        th:href="@{/audit}"

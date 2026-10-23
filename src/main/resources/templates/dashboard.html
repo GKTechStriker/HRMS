@@ -60,6 +60,35 @@
             <p class="text-3xl font-bold text-slate-900 mt-2" th:text="${#lists.size(sessions)}">1</p>
             <p class="text-xs text-slate-400 mt-1">Persisted in PostgreSQL (Spring Session JDBC)</p>
         </div>
+    <!-- Attendance Quick Action Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <h2 class="text-base font-bold text-slate-900">Today's Attendance</h2>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                <span th:if="${todayAttendance == null}">You have not clocked in for today yet.</span>
+                <span th:if="${todayAttendance != null and todayAttendance.clockOut == null}">
+                    Clocked in at <strong th:text="${#temporals.format(todayAttendance.clockIn, 'hh:mm a')}"></strong>
+                    (<span th:text="${todayAttendance.status.displayName}"></span>)
+                </span>
+                <span th:if="${todayAttendance != null and todayAttendance.clockOut != null}">
+                    Shift completed. Worked <strong th:text="${(todayAttendance.durationMinutes / 60) + 'h ' + (todayAttendance.durationMinutes % 60) + 'm'}"></strong>
+                </span>
+            </p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <a th:href="@{/attendance/my}"
+               class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+                Open Attendance Clock &rarr;
+            </a>
+            <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
+               th:href="@{/attendance/manage}"
+               class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition">
+                Company Roster
+            </a>
+        </div>
     </div>
 
     <!-- Employee Self-Service Card (Visible to EMPLOYEE role) -->

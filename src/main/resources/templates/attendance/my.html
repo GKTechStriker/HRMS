@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('My Attendance')}"></head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+<header th:replace="~{fragments/layout :: navbar('my-attendance')}"></header>
+
+<main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <!-- Flash Messages -->
+    <div th:if="${successMessage}" class="p-4 rounded-lg bg-green-50 border border-green-200 text-green-800 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            <span th:text="${successMessage}" class="font-medium"></span>
+        </div>
+    </div>
+    <div th:if="${errorMessage}" class="p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            <span th:text="${errorMessage}" class="font-medium"></span>
+        </div>
+    </div>
+
+    <!-- Header & Live Clock -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">My Attendance</h1>
+            <p class="text-sm text-slate-500 mt-1" th:text="${#temporals.format(currentDate, 'EEEE, MMMM dd, yyyy')}"></p>
+        </div>
+        <div class="flex items-center space-x-4 bg-slate-50 px-4 py-2.5 rounded-lg border border-slate-200">
+            <svg class="w-5 h-5 text-indigo-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span id="liveClock" class="font-mono text-lg font-bold text-slate-700">--:--:--</span>
+        </div>
+    </div>
+
+    <!-- Daily Punch Card Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Action Card (Left 2 cols) -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h2 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                Today's Action
+            </h2>
+
+            <!-- State 1: Not Clocked In Yet -->
+            <div th:if="${todayRecord == null or todayRecord.clockIn == null}">
+                <div class="p-5 rounded-lg bg-indigo-50/60 border border-indigo-100 mb-6">
+                    <div class="flex items-start space-x-3">
+                        <svg class="w-6 h-6 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-semibold text-indigo-900">You have not clocked in for today yet.</p>
+                            <p class="text-xs text-indigo-700 mt-0.5">Standard shift begins at 09:00 AM. Arrival after 09:15 AM will automatically be marked as Late.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form th:action="@{/attendance/clock-in}" method="post" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Work Mode</label>
+                            <select name="workMode" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option th:each="mode : ${workModes}"
+                                        th:value="${mode}"
+                                        th:text="${mode.displayName}">
+                                </option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Optional Note</label>
+                            <input type="text" name="notes" placeholder="e.g. Working from Bangalore client office"
+                                   class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                            class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm rounded-lg shadow-sm transition">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                        </svg>
+                        Clock In Now
+                    </button>
+                </form>
+            </div>
+
+            <!-- State 2: Clocked In, Open Workday -->
+            <div th:if="${todayRecord != null and todayRecord.clockIn != null and todayRecord.clockOut == null}">
+                <div class="p-5 rounded-lg bg-emerald-50 border border-emerald-200 mb-6 flex items-center justify-between">
+                    <div>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                            Active Shift
+                        </span>
+                        <p class="text-base font-bold text-slate-800 mt-2">
+                            Clocked in at <span th:text="${#temporals.format(todayRecord.clockIn, 'hh:mm a')}"></span>
+                        </p>
+                        <p class="text-xs text-slate-500 mt-0.5">
+                            Mode: <span class="font-medium text-slate-700" th:text="${todayRecord.workMode.displayName}"></span> |
+                            IP: <span class="font-mono text-slate-600" th:text="${todayRecord.clockInIp}"></span>
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <span th:if="${todayRecord.status.name() == 'PRESENT'}" class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">On Time</span>
+                        <span th:if="${todayRecord.status.name() == 'LATE'}" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Late Arrival</span>
+                    </div>
+                </div>
+
+                <form th:action="@{/attendance/clock-out}" method="post" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">Workday Summary / Handover Note</label>
+                        <input type="text" name="notes" placeholder="e.g. Completed sprint tickets, all tasks wrapped"
+                               class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <button type="submit"
+                            class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white font-medium text-sm rounded-lg shadow-sm transition">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        Clock Out & End Day
+                    </button>
+                </form>
+            </div>
+
+            <!-- State 3: Completed Shift -->
+            <div th:if="${todayRecord != null and todayRecord.clockOut != null}">
+                <div class="p-6 rounded-lg bg-slate-50 border border-slate-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-200 text-slate-800">
+                            Day Complete
+                        </span>
+                        <span th:text="${todayRecord.status.displayName}"
+                              class="px-3 py-1 rounded-full text-xs font-bold"
+                              th:classappend="${todayRecord.status.name() == 'PRESENT' ? 'bg-green-100 text-green-800' :
+                                              (todayRecord.status.name() == 'LATE' ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800')}">
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4 text-center py-2">
+                        <div class="p-3 bg-white rounded-lg border border-slate-200">
+                            <p class="text-xs text-slate-500 uppercase font-semibold">Clock In</p>
+                            <p class="text-sm font-bold text-slate-800 mt-1" th:text="${#temporals.format(todayRecord.clockIn, 'hh:mm a')}"></p>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg border border-slate-200">
+                            <p class="text-xs text-slate-500 uppercase font-semibold">Clock Out</p>
+                            <p class="text-sm font-bold text-slate-800 mt-1" th:text="${#temporals.format(todayRecord.clockOut, 'hh:mm a')}"></p>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg border border-slate-200">
+                            <p class="text-xs text-slate-500 uppercase font-semibold">Duration</p>
+                            <p class="text-sm font-bold text-slate-800 mt-1"
+                               th:text="${(todayRecord.durationMinutes / 60) + 'h ' + (todayRecord.durationMinutes % 60) + 'm'}">
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Quick Info Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+            <div>
+                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3">Policy Rules</h3>
+                <ul class="text-xs text-slate-600 space-y-2.5">
+                    <li class="flex items-start gap-2">
+                        <svg class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Standard shift: <strong>09:00 AM – 06:00 PM</strong></span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <svg class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Grace period: <strong>15 minutes</strong> (arrival after 09:15 AM marked Late)</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <svg class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Half Day threshold: Less than <strong>4 hours</strong> total duration</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <svg class="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Nightly finalization runs automatically at <strong>23:59 PM</strong></span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-200 text-xs text-slate-500">
+                <p>Employee: <strong class="text-slate-700" th:text="${employee != null ? employee.fullName + ' (' + employee.employeeCode + ')' : 'N/A'}"></strong></p>
+                <p class="mt-1">Department: <span class="text-slate-700" th:text="${employee != null && employee.department != null ? employee.department.name : 'N/A'}"></span></p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Monthly History Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">Monthly Log</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Your daily punch and status records</p>
+            </div>
+
+            <form th:action="@{/attendance/my}" method="get" class="flex items-center space-x-2">
+                <select name="month" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <option th:each="m : ${#numbers.sequence(1, 12)}"
+                            th:value="${m}"
+                            th:selected="${m == targetMonth}"
+                            th:text="${T(java.time.Month).of(m).name()}">
+                    </option>
+                </select>
+                <select name="year" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <option th:each="y : ${#numbers.sequence(targetYear - 1, targetYear + 1)}"
+                            th:value="${y}"
+                            th:selected="${y == targetYear}"
+                            th:text="${y}">
+                    </option>
+                </select>
+                <button type="submit" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition">
+                    View
+                </button>
+            </form>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-600">
+                <thead class="bg-slate-50 border-b border-slate-200 text-xs uppercase font-semibold text-slate-500">
+                <tr>
+                    <th class="py-3 px-4">Date</th>
+                    <th class="py-3 px-4">Day</th>
+                    <th class="py-3 px-4">Mode</th>
+                    <th class="py-3 px-4">Clock In</th>
+                    <th class="py-3 px-4">Clock Out</th>
+                    <th class="py-3 px-4">Total Time</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4">Notes</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                <tr th:if="${#lists.isEmpty(monthlyRecords)}">
+                    <td colspan="8" class="py-8 text-center text-slate-400 text-sm">
+                        No attendance records logged for this month.
+                    </td>
+                </tr>
+                <tr th:each="record : ${monthlyRecords}" class="hover:bg-slate-50 transition">
+                    <td class="py-3 px-4 font-mono font-medium text-slate-800"
+                        th:text="${#temporals.format(record.workDate, 'dd MMM yyyy')}"></td>
+                    <td class="py-3 px-4 text-xs text-slate-500"
+                        th:text="${#temporals.format(record.workDate, 'EEEE')}"></td>
+                    <td class="py-3 px-4">
+                        <span th:text="${record.workMode.displayName}" class="text-xs text-slate-700"></span>
+                    </td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-700"
+                        th:text="${record.clockIn != null ? #temporals.format(record.clockIn, 'hh:mm a') : '-'}"></td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-700"
+                        th:text="${record.clockOut != null ? #temporals.format(record.clockOut, 'hh:mm a') : '-'}"></td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-700">
+                        <span th:if="${record.durationMinutes != null}"
+                              th:text="${(record.durationMinutes / 60) + 'h ' + (record.durationMinutes % 60) + 'm'}"></span>
+                        <span th:if="${record.durationMinutes == null}">-</span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span th:text="${record.status.displayName}"
+                              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                              th:classappend="${record.status.name() == 'PRESENT' ? 'bg-green-100 text-green-800' :
+                                              (record.status.name() == 'LATE' ? 'bg-amber-100 text-amber-800' :
+                                              (record.status.name() == 'HALF_DAY' ? 'bg-orange-100 text-orange-800' :
+                                              (record.status.name() == 'ON_LEAVE' ? 'bg-blue-100 text-blue-800' :
+                                              (record.status.name() == 'HOLIDAY' ? 'bg-purple-100 text-purple-800' : 'bg-red-100 text-red-800'))))}">
+                        </span>
+                        <span th:if="${record.manuallyCorrected}"
+                              class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-slate-200 text-slate-700 font-mono"
+                              title="Manually adjusted by HR Admin">
+                            Adjusted
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-xs text-slate-500 max-w-xs truncate"
+                        th:text="${record.notes != null ? record.notes : '-'}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<!-- Realtime Clock Script -->
+<script>
+    function updateClock() {
+        const now = new Date();
+        const str = now.toLocaleTimeString();
+        const el = document.getElementById('liveClock');
+        if (el) el.textContent = str;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+</script>
+</body>
+</html>
