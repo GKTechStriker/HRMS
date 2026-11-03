@@ -91,6 +91,35 @@
         </div>
     </div>
 
+    <!-- Leave Management Quick Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                <h2 class="text-base font-bold text-slate-900">Leave & Time-Off Operations</h2>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                <span sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')">
+                    Pending approval queue: <strong class="text-amber-600 font-bold" th:text="${pendingLeaveCount != null ? pendingLeaveCount : 0}">0</strong> applications awaiting decision.
+                </span>
+                <span sec:authorize="hasRole('EMPLOYEE') and !hasRole('HR_ADMIN')">
+                    Submit time-off applications, check remaining quotas, and view approval status.
+                </span>
+            </p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <a th:href="@{/leaves/my}"
+               class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+                My Leaves & Apply &rarr;
+            </a>
+            <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
+               th:href="@{/leaves/manage}"
+               class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition">
+                Approval Queue
+            </a>
+        </div>
+    </div>
+
     <!-- Employee Self-Service Card (Visible to EMPLOYEE role) -->
     <div sec:authorize="hasRole('EMPLOYEE') and !hasRole('HR_ADMIN')" th:if="${myEmployeeProfile != null}"
          class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">

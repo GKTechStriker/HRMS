@@ -64,6 +64,19 @@
                         Attendance Roster
                     </a>
 
+                    <!-- Leaves: Self-Service & HR Approval Queue -->
+                    <a th:href="@{/leaves/my}"
+                       th:classappend="${activeTab == 'my-leaves'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
+                       class="px-3 py-2 rounded-md transition">
+                        My Leaves
+                    </a>
+                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
+                       th:href="@{/leaves/manage}"
+                       th:classappend="${activeTab == 'manage-leaves'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
+                       class="px-3 py-2 rounded-md transition">
+                        Leave Queue
+                    </a>
+
                     <!-- Audit Trail visible ONLY to SUPER_ADMIN and HR_ADMIN (Section 4.2) -->
                     <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
                        th:href="@{/audit}"

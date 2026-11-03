@@ -31,6 +31,7 @@ public class AuthAndShellController {
     private final SessionManagementService sessionManagementService;
     private final AuditService auditService;
     private final com.hrms.attendance.service.AttendanceService attendanceService;
+    private final com.hrms.leave.service.LeaveService leaveService;
     private final boolean demoHintsEnabled;
 
     public AuthAndShellController(EmployeeRepository employeeRepository,
@@ -38,12 +39,14 @@ public class AuthAndShellController {
                                   SessionManagementService sessionManagementService,
                                   AuditService auditService,
                                   com.hrms.attendance.service.AttendanceService attendanceService,
+                                  com.hrms.leave.service.LeaveService leaveService,
                                   @org.springframework.beans.factory.annotation.Value("${hrms.demo-hints.enabled:true}") boolean demoHintsEnabled) {
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
         this.sessionManagementService = sessionManagementService;
         this.auditService = auditService;
         this.attendanceService = attendanceService;
+        this.leaveService = leaveService;
         this.demoHintsEnabled = demoHintsEnabled;
     }
 
@@ -74,10 +77,14 @@ public class AuthAndShellController {
 
         if (principal.getRole() == Role.SUPER_ADMIN || principal.getRole() == Role.HR_ADMIN) {
             model.addAttribute("recentAudits", auditService.getRecentAuditLogsForPrincipal(principal, 10));
+            model.addAttribute("pendingLeaveCount", leaveService.getPendingCount());
         } else {
             model.addAttribute("recentAudits", Collections.emptyList());
             employeeRepository.findByUserId(principal.getUserId())
-                    .ifPresent(emp -> model.addAttribute("myEmployeeProfile", emp));
+                    .ifPresent(emp -> {
+                        model.addAttribute("myEmployeeProfile", emp);
+                        model.addAttribute("myRecentLeaves", leaveService.getEmployeeRequests(emp.getId()));
+                    });
         }
 
         return "dashboard";
