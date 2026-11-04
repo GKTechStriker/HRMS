@@ -65,11 +65,11 @@
                 </tr>
                 <tr th:each="req : ${pendingRequests}" class="hover:bg-slate-50 transition">
                     <td class="py-3 px-4">
-                        <div class="font-medium text-slate-800" th:text="${req.employee.fullName}"></div>
-                        <div class="text-xs font-mono text-slate-400" th:text="${req.employee.employeeCode}"></div>
+                        <div class="font-medium text-slate-800" th:text="${req.employee != null ? req.employee.fullName : '-'}"></div>
+                        <div class="text-xs font-mono text-slate-400" th:text="${req.employee != null ? req.employee.employeeCode : '-'}"></div>
                     </td>
                     <td class="py-3 px-4">
-                        <span class="font-semibold text-slate-800" th:text="${req.leaveType.name}"></span>
+                        <span class="font-semibold text-slate-800" th:text="${req.leaveType != null ? req.leaveType.name : '-'}"></span>
                     </td>
                     <td class="py-3 px-4 text-xs font-mono text-slate-700">
                         <span th:text="${#temporals.format(req.startDate, 'dd MMM yyyy')}"></span> &rarr;
@@ -78,7 +78,7 @@
                     <td class="py-3 px-4 font-bold text-slate-800" th:text="${#numbers.formatDecimal(req.totalDays, 1, 1)} + 'd'"></td>
                     <td class="py-3 px-4 text-xs text-slate-600 max-w-xs truncate" th:text="${req.reason}"></td>
                     <td class="py-3 px-4 text-xs text-slate-400"
-                        th:text="${#temporals.format(req.createdAt, 'dd MMM, hh:mm a')}"></td>
+                        th:text="${req.createdAt != null ? #temporals.format(req.createdAt, 'dd MMM, hh:mm a') : '-'}"></td>
                     <td class="py-3 px-4 text-right space-x-2" sec:authorize="hasRole('HR_ADMIN')">
                         <!-- Quick Approve Form -->
                         <form th:action="@{/leaves/{id}/approve(id=${req.id})}" method="post" class="inline"
@@ -91,7 +91,7 @@
                         <!-- Open Reject Modal -->
                         <button type="button"
                                 th:data-req-id="${req.id}"
-                                th:data-emp-name="${req.employee.fullName}"
+                                th:data-emp-name="${req.employee != null ? req.employee.fullName : ''}"
                                 th:data-days="${req.totalDays}"
                                 onclick="openRejectModal(this)"
                                 class="inline-flex items-center px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-md transition border border-rose-200">
@@ -132,10 +132,10 @@
                 </tr>
                 <tr th:each="req : ${allRequests}" class="hover:bg-slate-50 transition">
                     <td class="py-3 px-4">
-                        <div class="font-medium text-slate-800" th:text="${req.employee.fullName}"></div>
-                        <div class="text-xs font-mono text-slate-400" th:text="${req.employee.employeeCode}"></div>
+                        <div class="font-medium text-slate-800" th:text="${req.employee != null ? req.employee.fullName : '-'}"></div>
+                        <div class="text-xs font-mono text-slate-400" th:text="${req.employee != null ? req.employee.employeeCode : '-'}"></div>
                     </td>
-                    <td class="py-3 px-4 font-semibold text-slate-700" th:text="${req.leaveType.name}"></td>
+                    <td class="py-3 px-4 font-semibold text-slate-700" th:text="${req.leaveType != null ? req.leaveType.name : '-'}"></td>
                     <td class="py-3 px-4 text-xs font-mono text-slate-700">
                         <span th:text="${#temporals.format(req.startDate, 'dd MMM yyyy')}"></span> &rarr;
                         <span th:text="${#temporals.format(req.endDate, 'dd MMM yyyy')}"></span>

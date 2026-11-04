@@ -60,6 +60,8 @@
             <p class="text-3xl font-bold text-slate-900 mt-2" th:text="${#lists.size(sessions)}">1</p>
             <p class="text-xs text-slate-400 mt-1">Persisted in PostgreSQL (Spring Session JDBC)</p>
         </div>
+    </div>
+
     <!-- Attendance Quick Action Card -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -141,6 +143,37 @@
         </div>
     </div>
 
+    <!-- Analytics & Visual Trends (Visible to SUPER_ADMIN & HR_ADMIN) -->
+    <div sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Department Distribution Doughnut Chart -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Department Distribution</h2>
+                    <p class="text-xs text-slate-500">Active employee headcount by department</p>
+                </div>
+                <span class="px-2.5 py-1 text-[11px] font-semibold rounded bg-blue-50 text-blue-700 border border-blue-200">Live Metric</span>
+            </div>
+            <div class="relative flex-1 min-h-[260px] flex items-center justify-center">
+                <canvas id="deptHeadcountChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 14-Day Attendance Trends Stacked Bar Chart -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Attendance Trends (Last 14 Days)</h2>
+                    <p class="text-xs text-slate-500">Daily breakdown: Present, Late, Leave & Absent</p>
+                </div>
+                <span class="px-2.5 py-1 text-[11px] font-semibold rounded bg-indigo-50 text-indigo-700 border border-indigo-200">14-Day Rolling</span>
+            </div>
+            <div class="relative flex-1 min-h-[260px]">
+                <canvas id="attendanceTrendsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
     <!-- Audit Trail Preview (Visible ONLY to SUPER_ADMIN & HR_ADMIN) -->
     <div sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
          class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -194,5 +227,122 @@
 </main>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')">
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fetch Department Headcount Chart
+        fetch('/api/analytics/headcount-by-dept')
+            .then(function(res) {
+                if (!res.ok) throw new Error('Status ' + res.status);
+                return res.json();
+            })
+            .then(function(data) {
+                var canvas = document.getElementById('deptHeadcountChart');
+                if (!canvas) return;
+                if (!data || data.length === 0) {
+                    canvas.parentElement.innerHTML = '<p class="text-xs text-slate-400 text-center py-12">No department headcount data available yet.</p>';
+                    return;
+                }
+                var labels = data.map(function(d) { return d.departmentName; });
+                var counts = data.map(function(d) { return d.count; });
+                var palette = [
+                    '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#64748b'
+                ];
+                new Chart(canvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: counts,
+                            backgroundColor: palette.slice(0, labels.length),
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { boxWidth: 12, font: { size: 11 } }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(function(err) { console.error('Failed to load headcount analytics:', err); });
+
+        // Fetch Attendance Trends Chart
+        fetch('/api/analytics/attendance-trends?days=14')
+            .then(function(res) {
+                if (!res.ok) throw new Error('Status ' + res.status);
+                return res.json();
+            })
+            .then(function(data) {
+                var canvas = document.getElementById('attendanceTrendsChart');
+                if (!canvas) return;
+                if (!data || data.length === 0) {
+                    canvas.parentElement.innerHTML = '<p class="text-xs text-slate-400 text-center py-12">No attendance data recorded yet.</p>';
+                    return;
+                }
+                var labels = data.map(function(d) {
+                    var parts = d.date.split('-');
+                    return parts.length === 3 ? parts[1] + '/' + parts[2] : d.date;
+                });
+                new Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Present',
+                                data: data.map(function(d) { return d.present; }),
+                                backgroundColor: '#10b981'
+                            },
+                            {
+                                label: 'Late',
+                                data: data.map(function(d) { return d.late; }),
+                                backgroundColor: '#f59e0b'
+                            },
+                            {
+                                label: 'On Leave',
+                                data: data.map(function(d) { return d.onLeave; }),
+                                backgroundColor: '#6366f1'
+                            },
+                            {
+                                label: 'Absent',
+                                data: data.map(function(d) { return d.absent; }),
+                                backgroundColor: '#ef4444'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                stacked: true,
+                                grid: { display: false },
+                                ticks: { font: { size: 10 } }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: { stepSize: 1, font: { size: 10 } }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { boxWidth: 10, font: { size: 11 } }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(function(err) { console.error('Failed to load attendance trends:', err); });
+    });
+</script>
 </body>
 </html>

@@ -2,9 +2,11 @@ package com.hrms.employee.repository;
 
 import com.hrms.employee.entity.Employee;
 import com.hrms.employee.entity.EmployeeStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -21,12 +23,19 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     @Query("SELECT e FROM Employee e JOIN FETCH e.department JOIN FETCH e.jobRole LEFT JOIN FETCH e.user LEFT JOIN FETCH e.reportsTo WHERE e.id = :id")
     Optional<Employee> findByIdWithDetails(@Param("id") UUID id);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT e FROM Employee e WHERE e.id = :id")
+    Optional<Employee> findByIdForUpdate(@Param("id") UUID id);
+
     @Query("SELECT e FROM Employee e JOIN FETCH e.department JOIN FETCH e.jobRole LEFT JOIN FETCH e.user WHERE e.user.id = :userId")
     Optional<Employee> findByUserId(@Param("userId") UUID userId);
 
     List<Employee> findByStatus(EmployeeStatus status);
     long countByStatus(EmployeeStatus status);
     long countByDepartmentId(UUID departmentId);
+
+    @Query("SELECT COALESCE(d.name, 'Unassigned'), COUNT(e) FROM Employee e LEFT JOIN e.department d WHERE e.status = :status GROUP BY d.name ORDER BY COUNT(e) DESC")
+    List<Object[]> countHeadcountByDepartment(@Param("status") EmployeeStatus status);
 
     @Query("SELECT e FROM Employee e JOIN FETCH e.department JOIN FETCH e.jobRole LEFT JOIN FETCH e.user ORDER BY e.employeeCode ASC")
     List<Employee> findAllWithDepartmentAndJobRole();

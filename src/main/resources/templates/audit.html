@@ -7,11 +7,19 @@
 
 <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="px-6 py-5 border-b border-slate-200">
-            <h1 class="text-lg font-bold text-slate-900">Immutable Audit Trail</h1>
-            <p class="text-xs text-slate-500 mt-1">
-                Append-only log enforced by PostgreSQL trigger and Spring AOP (<code class="font-mono">@Audited</code>).
-            </p>
+        <div class="px-6 py-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <h1 class="text-lg font-bold text-slate-900">Immutable Audit Trail</h1>
+                <p class="text-xs text-slate-500 mt-1">
+                    Append-only log enforced by PostgreSQL trigger and Spring AOP (<code class="font-mono">@Audited</code>).
+                </p>
+            </div>
+            <div>
+                <a th:href="@{/reports/audit/csv}"
+                   class="inline-flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition">
+                    Export Audit CSV
+                </a>
+            </div>
         </div>
 
         <div class="overflow-x-auto">

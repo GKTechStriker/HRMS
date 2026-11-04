@@ -76,6 +76,27 @@ class LeaveConcurrencyTest {
         }
         LocalDate nextTuesday = nextMonday.plusDays(1);
 
+        final LocalDate targetMonday = nextMonday;
+        final LocalDate targetTuesday = nextTuesday;
+
+        // Ensure clean slate for test dates so previous test runs do not taint concurrency state
+        leaveRequestRepository.deleteAll(
+                leaveRequestRepository.findAll().stream()
+                        .filter(r -> r.getEmployee().getId().equals(employee.getId()) &&
+                                     r.getStartDate().equals(targetMonday) && r.getEndDate().equals(targetTuesday))
+                        .toList()
+        );
+
+        int currentYear = LocalDate.now().getYear();
+        leaveBalanceService.initializeBalancesForEmployee(employee, currentYear);
+        leaveBalanceRepository.findByEmployeeIdAndLeaveTypeIdAndYear(employee.getId(), annualType.getId(), currentYear)
+                .ifPresent(b -> {
+                    b.setRemainingDays(b.getAllocatedDays());
+                    b.setPendingDays(BigDecimal.ZERO);
+                    b.setUsedDays(BigDecimal.ZERO);
+                    leaveBalanceRepository.saveAndFlush(b);
+                });
+
         int threads = 8;
         ExecutorService executor = Executors.newFixedThreadPool(threads);
         CountDownLatch startGate = new CountDownLatch(1);

@@ -34,6 +34,9 @@ public interface AttendanceRecordRepository extends JpaRepository<AttendanceReco
 
     long countByWorkDate(LocalDate workDate);
 
+    @Query("SELECT a.workDate, a.status, COUNT(a) FROM AttendanceRecord a WHERE a.workDate >= :startDate GROUP BY a.workDate, a.status ORDER BY a.workDate ASC")
+    List<Object[]> countAttendanceByDateAndStatus(@Param("startDate") LocalDate startDate);
+
     /**
      * Find active employees who have no attendance record for the specified date.
      */
