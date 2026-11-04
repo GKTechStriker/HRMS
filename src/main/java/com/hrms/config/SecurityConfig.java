@@ -72,6 +72,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/leaves/*/approve", "/leaves/*/reject").hasRole("HR_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/leaves/manage").hasAnyRole("SUPER_ADMIN", "HR_ADMIN")
                 .requestMatchers("/leaves/**").authenticated()
+                // Analytics & Reporting (Milestone 4)
+                .requestMatchers("/api/analytics/**", "/reports/**").hasAnyRole("SUPER_ADMIN", "HR_ADMIN")
                 // Audit Trail & Session Oversight (Section 8.2)
                 .requestMatchers("/audit/**").hasAnyRole("SUPER_ADMIN", "HR_ADMIN")
                 .requestMatchers("/sessions/**").hasAnyRole("SUPER_ADMIN", "HR_ADMIN", "EMPLOYEE")

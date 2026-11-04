@@ -67,7 +67,7 @@ public class LeaveBalanceService {
                     created.size(), employee.getFullName(), employee.getEmployeeCode(), year);
         }
 
-        return leaveBalanceRepository.findByEmployeeIdAndYear(employee.getId(), year);
+        return leaveBalanceRepository.findByEmployeeIdAndYearWithLeaveType(employee.getId(), year);
     }
 
     /**
@@ -75,7 +75,7 @@ public class LeaveBalanceService {
      */
     @Transactional
     public List<LeaveBalanceSummaryDto> getEmployeeBalances(UUID employeeId, int year) {
-        List<LeaveBalance> balances = leaveBalanceRepository.findByEmployeeIdAndYear(employeeId, year);
+        List<LeaveBalance> balances = leaveBalanceRepository.findByEmployeeIdAndYearWithLeaveType(employeeId, year);
 
         if (balances.isEmpty()) {
             Employee employee = employeeRepository.findById(employeeId)

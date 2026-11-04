@@ -75,7 +75,7 @@ public class LeaveService {
      */
     @Transactional
     public LeaveRequest applyForLeave(UUID userId, LeaveApplicationDto dto) {
-        Employee employee = employeeRepository.findByUserId(userId)
+        final Employee employee = employeeRepository.findByUserId(userId)
                 .orElseThrow(() -> new BusinessException("No employee profile found for current user account."));
 
         if (employee.getStatus() != EmployeeStatus.ACTIVE) {
@@ -96,7 +96,24 @@ public class LeaveService {
             throw new BusinessException("Selected date range contains zero working days (weekends only).");
         }
 
-        // Overlap Check: Ensure no existing PENDING or APPROVED requests cover these dates
+        // 1. Acquire pessimistic write lock on the employee row to serialize concurrent leave applications
+        employeeRepository.findByIdForUpdate(employee.getId());
+
+        LeaveType leaveType = leaveTypeRepository.findById(dto.getLeaveTypeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Leave type not found with ID: " + dto.getLeaveTypeId()));
+
+        int year = dto.getStartDate().getYear();
+
+        // 2. Concurrency Hold Mechanic: Acquire pessimistic lock on balance row
+        LeaveBalance balance = leaveBalanceRepository.findForUpdate(employee.getId(), leaveType.getId(), year)
+                .orElseGet(() -> {
+                    leaveBalanceService.initializeBalancesForEmployee(employee, year);
+                    return leaveBalanceRepository.findForUpdate(employee.getId(), leaveType.getId(), year)
+                            .orElseThrow(() -> new IllegalStateException("Failed to initialize and lock leave balance"));
+                });
+
+        // 3. Overlap Check under write lock: Ensure no existing PENDING or APPROVED requests cover these dates.
+        // Executing this inside the locked critical section guarantees concurrent requests see newly committed entries.
         boolean hasOverlap = leaveRequestRepository.existsOverlappingLeave(
                 employee.getId(),
                 List.of(LeaveStatus.PENDING, LeaveStatus.APPROVED),
@@ -106,19 +123,6 @@ public class LeaveService {
         if (hasOverlap) {
             throw new BusinessException("You already have an active or pending leave request overlapping these dates.");
         }
-
-        LeaveType leaveType = leaveTypeRepository.findById(dto.getLeaveTypeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Leave type not found with ID: " + dto.getLeaveTypeId()));
-
-        int year = dto.getStartDate().getYear();
-
-        // Concurrency Hold Mechanic: Acquire pessimistic lock on balance row
-        LeaveBalance balance = leaveBalanceRepository.findForUpdate(employee.getId(), leaveType.getId(), year)
-                .orElseGet(() -> {
-                    leaveBalanceService.initializeBalancesForEmployee(employee, year);
-                    return leaveBalanceRepository.findForUpdate(employee.getId(), leaveType.getId(), year)
-                            .orElseThrow(() -> new IllegalStateException("Failed to initialize and lock leave balance"));
-                });
 
         if (balance.getRemainingDays().compareTo(totalDays) < 0) {
             throw new BusinessException(String.format(
@@ -140,7 +144,7 @@ public class LeaveService {
                 dto.getReason().trim()
         );
 
-        LeaveRequest saved = leaveRequestRepository.save(request);
+        LeaveRequest saved = leaveRequestRepository.saveAndFlush(request);
 
         log.info("Leave request #{} submitted by {} for {} days ({}) - Provisional hold applied.",
                 saved.getId(), employee.getFullName(), totalDays, leaveType.getName());
@@ -287,12 +291,12 @@ public class LeaveService {
 
     @Transactional(readOnly = true)
     public List<LeaveRequest> getEmployeeRequests(UUID employeeId) {
-        return leaveRequestRepository.findByEmployeeIdOrderByCreatedAtDesc(employeeId);
+        return leaveRequestRepository.findByEmployeeIdWithLeaveTypeOrderByCreatedAtDesc(employeeId);
     }
 
     @Transactional(readOnly = true)
     public List<LeaveRequest> getAllRequests() {
-        return leaveRequestRepository.findAll();
+        return leaveRequestRepository.findAllWithDetails();
     }
 
     @Transactional(readOnly = true)

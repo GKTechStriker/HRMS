@@ -17,22 +17,40 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, UUID
 
     List<LeaveRequest> findByEmployeeIdOrderByCreatedAtDesc(UUID employeeId);
 
-    @Query("SELECT r FROM LeaveRequest r JOIN FETCH r.employee e JOIN FETCH r.leaveType t " +
+    @Query("SELECT r FROM LeaveRequest r JOIN FETCH r.leaveType t " +
+           "WHERE r.employee.id = :employeeId ORDER BY r.createdAt DESC")
+    List<LeaveRequest> findByEmployeeIdWithLeaveTypeOrderByCreatedAtDesc(@Param("employeeId") UUID employeeId);
+
+    @Query("SELECT r FROM LeaveRequest r JOIN FETCH r.employee e JOIN FETCH r.leaveType t LEFT JOIN FETCH r.actionedBy a " +
            "WHERE r.status = :status ORDER BY r.createdAt ASC")
     List<LeaveRequest> findByStatusWithDetails(@Param("status") LeaveStatus status);
 
+    @Query("SELECT r FROM LeaveRequest r JOIN FETCH r.employee e JOIN FETCH r.leaveType t LEFT JOIN FETCH r.actionedBy a " +
+           "ORDER BY r.createdAt DESC")
+    List<LeaveRequest> findAllWithDetails();
+
     long countByStatus(LeaveStatus status);
 
+    @Query("SELECT r.leaveType.name, COALESCE(SUM(r.totalDays), 0) FROM LeaveRequest r WHERE r.status = :status GROUP BY r.leaveType.name")
+    List<Object[]> sumDaysByLeaveType(@Param("status") LeaveStatus status);
+
     /**
-     * Checks if any active (PENDING or APPROVED) leave request exists overlapping the date range.
+     * Counts active (PENDING or APPROVED) leave requests overlapping the specified date range.
      */
-    @Query("SELECT COUNT(r) > 0 FROM LeaveRequest r " +
+    @Query("SELECT COUNT(r) FROM LeaveRequest r " +
            "WHERE r.employee.id = :employeeId " +
            "AND r.status IN :activeStatuses " +
            "AND r.startDate <= :endDate " +
            "AND r.endDate >= :startDate")
-    boolean existsOverlappingLeave(@Param("employeeId") UUID employeeId,
-                                  @Param("activeStatuses") Collection<LeaveStatus> activeStatuses,
-                                  @Param("startDate") LocalDate startDate,
-                                  @Param("endDate") LocalDate endDate);
+    long countOverlappingLeaves(@Param("employeeId") UUID employeeId,
+                                @Param("activeStatuses") Collection<LeaveStatus> activeStatuses,
+                                @Param("startDate") LocalDate startDate,
+                                @Param("endDate") LocalDate endDate);
+
+    default boolean existsOverlappingLeave(UUID employeeId,
+                                          Collection<LeaveStatus> activeStatuses,
+                                          LocalDate startDate,
+                                          LocalDate endDate) {
+        return countOverlappingLeaves(employeeId, activeStatuses, startDate, endDate) > 0;
+    }
 }

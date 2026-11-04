@@ -23,15 +23,21 @@
             </p>
         </div>
 
-        <div sec:authorize="hasRole('HR_ADMIN')" class="flex items-center space-x-2.5">
-            <a th:href="@{/employees/import}"
+        <div class="flex items-center space-x-2.5">
+            <a th:href="@{/reports/employees/csv}"
                class="inline-flex items-center px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg shadow-sm transition">
-                CSV Bulk Import (Dry-Run)
+                Export CSV
             </a>
-            <a th:href="@{/employees/new}"
-               class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
-                + Add Employee
-            </a>
+            <div sec:authorize="hasRole('HR_ADMIN')" class="flex items-center space-x-2.5">
+                <a th:href="@{/employees/import}"
+                   class="inline-flex items-center px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg shadow-sm transition">
+                    CSV Bulk Import (Dry-Run)
+                </a>
+                <a th:href="@{/employees/new}"
+                   class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                    + Add Employee
+                </a>
+            </div>
         </div>
     </div>
 

@@ -17,6 +17,9 @@ public interface LeaveBalanceRepository extends JpaRepository<LeaveBalance, UUID
 
     List<LeaveBalance> findByEmployeeIdAndYear(UUID employeeId, int year);
 
+    @Query("SELECT b FROM LeaveBalance b JOIN FETCH b.leaveType WHERE b.employee.id = :employeeId AND b.year = :year")
+    List<LeaveBalance> findByEmployeeIdAndYearWithLeaveType(@Param("employeeId") UUID employeeId, @Param("year") int year);
+
     Optional<LeaveBalance> findByEmployeeIdAndLeaveTypeIdAndYear(UUID employeeId, UUID leaveTypeId, int year);
 
     /**
