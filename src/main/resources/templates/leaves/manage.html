@@ -78,7 +78,7 @@
                     <td class="py-3 px-4 font-bold text-slate-800" th:text="${#numbers.formatDecimal(req.totalDays, 1, 1)} + 'd'"></td>
                     <td class="py-3 px-4 text-xs text-slate-600 max-w-xs truncate" th:text="${req.reason}"></td>
                     <td class="py-3 px-4 text-xs text-slate-400"
-                        th:text="${req.createdAt != null ? #temporals.format(req.createdAt, 'dd MMM, hh:mm a') : '-'}"></td>
+                        th:text="${@timeFmt.formatInstant(req.createdAt, 'dd MMM, hh:mm a')}"></td>
                     <td class="py-3 px-4 text-right space-x-2" sec:authorize="hasRole('HR_ADMIN')">
                         <!-- Quick Approve Form -->
                         <form th:action="@{/leaves/{id}/approve(id=${req.id})}" method="post" class="inline"
@@ -173,7 +173,8 @@
                 </button>
             </div>
 
-            <form id="rejectForm" method="post" class="space-y-4">
+            <form id="rejectForm" method="post" th:attr="data-action-prefix=@{/leaves/}" class="space-y-4">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <p class="text-sm text-slate-600">
                     Reject leave application for <strong id="rejectEmpName" class="text-slate-800"></strong>
                     (<span id="rejectDaysLabel"></span> days)?
@@ -211,8 +212,10 @@
         const reqId = btn.getAttribute('data-req-id');
         const empName = btn.getAttribute('data-emp-name');
         const days = btn.getAttribute('data-days');
+        const form = document.getElementById('rejectForm');
+        const prefix = form.getAttribute('data-action-prefix') || '/leaves/';
 
-        document.getElementById('rejectForm').action = '/leaves/' + reqId + '/reject';
+        form.action = prefix + reqId + '/reject';
         document.getElementById('rejectEmpName').textContent = empName;
         document.getElementById('rejectDaysLabel').textContent = days;
 

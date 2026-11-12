@@ -7,6 +7,7 @@ import com.hrms.attendance.entity.AttendanceStatus;
 import com.hrms.attendance.entity.WorkMode;
 import com.hrms.attendance.repository.AttendanceRecordRepository;
 import com.hrms.attendance.repository.HolidayRepository;
+import com.hrms.audit.AuditContext;
 import com.hrms.audit.Audited;
 import com.hrms.employee.entity.Employee;
 import com.hrms.employee.entity.EmployeeStatus;
@@ -22,7 +23,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -43,15 +48,18 @@ public class AttendanceService {
     private final EmployeeRepository employeeRepository;
     private final HolidayRepository holidayRepository;
     private final UserRepository userRepository;
+    private final Clock clock;
 
     public AttendanceService(AttendanceRecordRepository attendanceRecordRepository,
                              EmployeeRepository employeeRepository,
                              HolidayRepository holidayRepository,
-                             UserRepository userRepository) {
+                             UserRepository userRepository,
+                             Clock clock) {
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.employeeRepository = employeeRepository;
         this.holidayRepository = holidayRepository;
         this.userRepository = userRepository;
+        this.clock = clock;
     }
 
     /**
@@ -59,36 +67,45 @@ public class AttendanceService {
      */
     @Transactional(readOnly = true)
     public Optional<AttendanceRecord> getTodayRecord(UUID userId) {
-        return attendanceRecordRepository.findByEmployeeUserIdAndWorkDate(userId, LocalDate.now());
+        return attendanceRecordRepository.findByEmployeeUserIdAndWorkDate(userId, LocalDate.now(clock));
     }
 
     /**
-     * Executes clock-in for the authenticated user.
+     * Executes clock-in for the authenticated user with pessimistic employee row locking.
      */
+    @Audited(action = "ATTENDANCE_CLOCK_IN", targetType = "ATTENDANCE_RECORD")
     @Transactional
     public AttendanceRecord clockIn(UUID userId, WorkMode workMode, String ipAddress, String notes) {
-        Employee employee = employeeRepository.findByUserId(userId)
+        Employee employeeRef = employeeRepository.findByUserId(userId)
                 .orElseThrow(() -> new BusinessException("No employee profile is linked to your user account. Only employees can clock in."));
+
+        // Serialize concurrent clock-in punches for the same employee on PostgreSQL
+        Employee employee = employeeRepository.findByIdForUpdate(employeeRef.getId())
+                .orElseThrow(() -> new BusinessException("No employee profile is linked to your user account."));
 
         if (employee.getStatus() != EmployeeStatus.ACTIVE) {
             throw new BusinessException("Cannot clock in: Your employment status is " + employee.getStatus().getDisplayName());
         }
 
-        LocalDate today = LocalDate.now();
+        ZonedDateTime businessNow = ZonedDateTime.now(clock);
+        LocalDate today = businessNow.toLocalDate();
         Optional<AttendanceRecord> existingOpt = attendanceRecordRepository.findByEmployeeIdAndWorkDate(employee.getId(), today);
 
         if (existingOpt.isPresent()) {
             AttendanceRecord existing = existingOpt.get();
             if (existing.getClockIn() != null) {
-                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("hh:mm a");
-                throw new BusinessException("You have already clocked in today at " + existing.getClockIn().format(fmt));
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH);
+                throw new BusinessException("You have already clocked in today at "
+                        + existing.getClockIn().atZoneSameInstant(clock.getZone()).format(fmt));
             }
         }
 
-        OffsetDateTime now = OffsetDateTime.now();
-        LocalTime localTime = now.toLocalTime();
+        Map<String, Object> previousState = existingOpt.map(this::toAuditSnapshot).orElse(null);
 
-        // Determine if arriving late (after 09:15 AM)
+        OffsetDateTime now = businessNow.toOffsetDateTime();
+        LocalTime localTime = businessNow.toLocalTime();
+
+        // Determine if arriving late (after 09:15 AM in business timezone)
         AttendanceStatus initialStatus = localTime.isAfter(LATE_THRESHOLD_TIME)
                 ? AttendanceStatus.LATE
                 : AttendanceStatus.PRESENT;
@@ -102,19 +119,27 @@ public class AttendanceService {
             record.setNotes(notes.trim());
         }
 
+        AttendanceRecord saved = attendanceRecordRepository.saveAndFlush(record);
+        AuditContext.setTarget(saved.getId(), previousState, toAuditSnapshot(saved));
+
         log.info("Employee {} ({}) clocked in at {} with status {}", employee.getFullName(), employee.getEmployeeCode(), now, initialStatus);
-        return attendanceRecordRepository.save(record);
+        return saved;
     }
 
     /**
      * Executes clock-out for the authenticated user and calculates total work duration.
      */
+    @Audited(action = "ATTENDANCE_CLOCK_OUT", targetType = "ATTENDANCE_RECORD")
     @Transactional
     public AttendanceRecord clockOut(UUID userId, String ipAddress, String notes) {
-        Employee employee = employeeRepository.findByUserId(userId)
+        Employee employeeRef = employeeRepository.findByUserId(userId)
                 .orElseThrow(() -> new BusinessException("No employee profile is linked to your user account."));
 
-        LocalDate today = LocalDate.now();
+        Employee employee = employeeRepository.findByIdForUpdate(employeeRef.getId())
+                .orElseThrow(() -> new BusinessException("No employee profile is linked to your user account."));
+
+        ZonedDateTime businessNow = ZonedDateTime.now(clock);
+        LocalDate today = businessNow.toLocalDate();
         AttendanceRecord record = attendanceRecordRepository.findByEmployeeIdAndWorkDate(employee.getId(), today)
                 .orElseThrow(() -> new BusinessException("No clock-in record found for today. Please clock in first."));
 
@@ -123,20 +148,24 @@ public class AttendanceService {
         }
 
         if (record.getClockOut() != null) {
-            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("hh:mm a");
-            throw new BusinessException("You have already clocked out today at " + record.getClockOut().format(fmt));
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH);
+            throw new BusinessException("You have already clocked out today at "
+                    + record.getClockOut().atZoneSameInstant(clock.getZone()).format(fmt));
         }
 
-        OffsetDateTime now = OffsetDateTime.now();
+        Map<String, Object> previousState = toAuditSnapshot(record);
+
+        OffsetDateTime now = businessNow.toOffsetDateTime();
         record.setClockOut(now);
         record.setClockOutIp(ipAddress);
 
         // Calculate duration
         long minutes = Duration.between(record.getClockIn(), now).toMinutes();
-        record.setDurationMinutes((int) minutes);
+        int duration = (int) Math.max(0, minutes);
+        record.setDurationMinutes(duration);
 
         // Check if worked duration is less than half day (4 hours) and wasn't already marked late/half-day
-        if (minutes < HALF_DAY_MINUTES_THRESHOLD && record.getStatus() == AttendanceStatus.PRESENT) {
+        if (duration < HALF_DAY_MINUTES_THRESHOLD && record.getStatus() == AttendanceStatus.PRESENT) {
             record.setStatus(AttendanceStatus.HALF_DAY);
         }
 
@@ -145,9 +174,12 @@ public class AttendanceService {
             record.setNotes(combined);
         }
 
+        AttendanceRecord saved = attendanceRecordRepository.saveAndFlush(record);
+        AuditContext.setTarget(saved.getId(), previousState, toAuditSnapshot(saved));
+
         log.info("Employee {} ({}) clocked out at {}. Duration: {} minutes, Status: {}",
-                employee.getFullName(), employee.getEmployeeCode(), now, minutes, record.getStatus());
-        return attendanceRecordRepository.save(record);
+                employee.getFullName(), employee.getEmployeeCode(), now, duration, saved.getStatus());
+        return saved;
     }
 
     /**
@@ -210,13 +242,20 @@ public class AttendanceService {
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with ID: " + dto.getEmployeeId()));
 
         AttendanceRecord record;
+        boolean existedBefore;
         if (dto.getRecordId() != null) {
             record = attendanceRecordRepository.findById(dto.getRecordId())
                     .orElseThrow(() -> new ResourceNotFoundException("Attendance record not found"));
+            existedBefore = true;
         } else {
-            record = attendanceRecordRepository.findByEmployeeIdAndWorkDate(employee.getId(), dto.getWorkDate())
-                    .orElseGet(() -> new AttendanceRecord(employee, dto.getWorkDate(), dto.getStatus(), dto.getWorkMode()));
+            Optional<AttendanceRecord> existingOpt = attendanceRecordRepository
+                    .findByEmployeeIdAndWorkDate(employee.getId(), dto.getWorkDate());
+            existedBefore = existingOpt.isPresent();
+            record = existingOpt.orElseGet(() ->
+                    new AttendanceRecord(employee, dto.getWorkDate(), dto.getStatus(), dto.getWorkMode()));
         }
+
+        Map<String, Object> previousState = existedBefore ? toAuditSnapshot(record) : null;
 
         record.setStatus(dto.getStatus());
         record.setWorkMode(dto.getWorkMode() != null ? dto.getWorkMode() : WorkMode.ON_SITE);
@@ -224,26 +263,67 @@ public class AttendanceService {
         record.setCorrectedBy(hrUser);
         record.setCorrectionReason(dto.getReason().trim());
 
-        ZoneOffset offset = OffsetDateTime.now().getOffset();
+        ZoneId businessZone = clock.getZone();
 
-        if (dto.getClockInTime() != null && !dto.getClockInTime().isBlank()) {
-            LocalTime inTime = LocalTime.parse(dto.getClockInTime().trim());
-            record.setClockIn(OffsetDateTime.of(dto.getWorkDate(), inTime, offset));
+        if (dto.getClockInTime() != null) {
+            if (!dto.getClockInTime().isBlank()) {
+                LocalTime inTime = parseCorrectionTime(dto.getClockInTime());
+                record.setClockIn(ZonedDateTime.of(dto.getWorkDate(), inTime, businessZone).toOffsetDateTime());
+            } else {
+                record.setClockIn(null);
+            }
         }
 
-        if (dto.getClockOutTime() != null && !dto.getClockOutTime().isBlank()) {
-            LocalTime outTime = LocalTime.parse(dto.getClockOutTime().trim());
-            record.setClockOut(OffsetDateTime.of(dto.getWorkDate(), outTime, offset));
+        if (dto.getClockOutTime() != null) {
+            if (!dto.getClockOutTime().isBlank()) {
+                LocalTime outTime = parseCorrectionTime(dto.getClockOutTime());
+                record.setClockOut(ZonedDateTime.of(dto.getWorkDate(), outTime, businessZone).toOffsetDateTime());
+            } else {
+                record.setClockOut(null);
+            }
         }
 
         if (record.getClockIn() != null && record.getClockOut() != null) {
+            if (record.getClockOut().isBefore(record.getClockIn())) {
+                throw new BusinessException("Clock-out time cannot be earlier than clock-in time.");
+            }
             long minutes = Duration.between(record.getClockIn(), record.getClockOut()).toMinutes();
-            record.setDurationMinutes((int) Math.max(0, minutes));
+            record.setDurationMinutes((int) minutes);
+        } else {
+            record.setDurationMinutes(null);
         }
+
+        AttendanceRecord saved = attendanceRecordRepository.saveAndFlush(record);
+        Map<String, Object> newState = toAuditSnapshot(saved);
+        newState.put("correctedByEmail", hrUser.getEmail());
+        AuditContext.setTarget(saved.getId(), previousState, newState);
 
         log.info("HR Admin {} manually corrected attendance for employee {} on date {}. Reason: {}",
                 hrUser.getEmail(), employee.getFullName(), dto.getWorkDate(), dto.getReason());
 
-        return attendanceRecordRepository.save(record);
+        return saved;
+    }
+
+    private LocalTime parseCorrectionTime(String rawTime) {
+        try {
+            return LocalTime.parse(rawTime.trim());
+        } catch (DateTimeParseException ex) {
+            throw new BusinessException("Invalid time format '" + rawTime + "'; expected HH:mm.");
+        }
+    }
+
+    private Map<String, Object> toAuditSnapshot(AttendanceRecord rec) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("employeeCode", rec.getEmployee() != null ? rec.getEmployee().getEmployeeCode() : null);
+        map.put("employeeName", rec.getEmployee() != null ? rec.getEmployee().getFullName() : null);
+        map.put("workDate", rec.getWorkDate() != null ? rec.getWorkDate().toString() : null);
+        map.put("status", rec.getStatus() != null ? rec.getStatus().name() : null);
+        map.put("workMode", rec.getWorkMode() != null ? rec.getWorkMode().name() : null);
+        map.put("clockIn", rec.getClockIn() != null ? rec.getClockIn().toString() : null);
+        map.put("clockOut", rec.getClockOut() != null ? rec.getClockOut().toString() : null);
+        map.put("durationMinutes", rec.getDurationMinutes());
+        map.put("manuallyCorrected", rec.isManuallyCorrected());
+        map.put("correctionReason", rec.getCorrectionReason());
+        return map;
     }
 }

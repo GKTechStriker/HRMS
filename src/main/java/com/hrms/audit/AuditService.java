@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -21,9 +22,11 @@ import java.util.UUID;
 public class AuditService {
 
     private final AuditLogRepository auditLogRepository;
+    private final Clock clock;
 
-    public AuditService(AuditLogRepository auditLogRepository) {
+    public AuditService(AuditLogRepository auditLogRepository, Clock clock) {
         this.auditLogRepository = auditLogRepository;
+        this.clock = clock;
     }
 
     /**
@@ -55,7 +58,7 @@ public class AuditService {
                 Map.of(
                         "status", "VERIFIED",
                         "note", verificationNote != null ? verificationNote : "Phase 1 Week 2 Audit Gate Check",
-                        "verifiedAt", Instant.now().toString()
+                        "verifiedAt", Instant.now(clock).toString()
                 )
         );
         return verificationId;

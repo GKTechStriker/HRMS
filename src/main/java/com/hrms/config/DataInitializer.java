@@ -44,7 +44,7 @@ public class DataInitializer implements ApplicationRunner {
                            EmployeeRepository employeeRepository,
                            PasswordEncoder passwordEncoder,
                            @Value("${hrms.seed.enabled:true}") boolean seedEnabled,
-                           @Value("${hrms.security.default-initial-password}") String defaultInitialPassword) {
+                           @Value("${hrms.security.default-initial-password:}") String defaultInitialPassword) {
         this.userRepository = userRepository;
         this.departmentRepository = departmentRepository;
         this.jobRoleRepository = jobRoleRepository;
@@ -64,6 +64,10 @@ public class DataInitializer implements ApplicationRunner {
         if (userRepository.count() > 0) {
             log.info("Database already contains {} user(s); skipping initial seed.", userRepository.count());
             return;
+        }
+        if (defaultInitialPassword == null || defaultInitialPassword.isBlank()) {
+            throw new IllegalStateException(
+                    "HRMS_DEFAULT_USER_PASSWORD (hrms.security.default-initial-password) must not be blank when initial seeding is enabled.");
         }
 
         log.info("Seeding initial HRMS departments, job roles, and role accounts...");

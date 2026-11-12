@@ -71,12 +71,15 @@
             </div>
             <p class="text-xs text-slate-500 mt-1">
                 <span th:if="${todayAttendance == null}">You have not clocked in for today yet.</span>
-                <span th:if="${todayAttendance != null and todayAttendance.clockOut == null}">
-                    Clocked in at <strong th:text="${#temporals.format(todayAttendance.clockIn, 'hh:mm a')}"></strong>
+                <span th:if="${todayAttendance != null and todayAttendance.clockIn == null and todayAttendance.clockOut == null}">
+                    Today's status: <strong th:text="${todayAttendance.status.displayName}"></strong>
+                </span>
+                <span th:if="${todayAttendance != null and todayAttendance.clockIn != null and todayAttendance.clockOut == null}">
+                    Clocked in at <strong th:text="${@timeFmt.formatDateTime(todayAttendance.clockIn, 'hh:mm a')}"></strong>
                     (<span th:text="${todayAttendance.status.displayName}"></span>)
                 </span>
                 <span th:if="${todayAttendance != null and todayAttendance.clockOut != null}">
-                    Shift completed. Worked <strong th:text="${(todayAttendance.durationMinutes / 60) + 'h ' + (todayAttendance.durationMinutes % 60) + 'm'}"></strong>
+                    Shift completed. Worked <strong th:text="${@timeFmt.formatDuration(todayAttendance.durationMinutes)}"></strong>
                 </span>
             </p>
         </div>
@@ -208,7 +211,8 @@
                     </td>
                 </tr>
                 <tr th:each="entry : ${recentAudits}" class="hover:bg-slate-50">
-                    <td class="px-4 py-3 font-mono text-xs text-slate-600" th:text="${entry.occurredAt}">2026-10-08T14:00:00Z</td>
+                    <td class="px-4 py-3 font-mono text-xs text-slate-600"
+                        th:text="${@timeFmt.formatInstant(entry.occurredAt, 'dd MMM yyyy, hh:mm:ss a')}">2026-10-08 14:00:00</td>
                     <td class="px-4 py-3 font-medium text-slate-800" th:text="${entry.user.email}">hr1@company.com</td>
                     <td class="px-4 py-3 font-mono text-xs text-blue-700" th:text="${entry.hrCode != null ? entry.hrCode : '—'}">HR-001</td>
                     <td class="px-4 py-3">

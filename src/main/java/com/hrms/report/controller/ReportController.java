@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -26,9 +27,11 @@ import java.util.UUID;
 public class ReportController {
 
     private final ExportService exportService;
+    private final Clock clock;
 
-    public ReportController(ExportService exportService) {
+    public ReportController(ExportService exportService, Clock clock) {
         this.exportService = exportService;
+        this.clock = clock;
     }
 
     /**
@@ -38,7 +41,7 @@ public class ReportController {
     public ResponseEntity<byte[]> exportEmployeesCsv() {
         byte[] csv = exportService.generateEmployeesCsv();
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"employees_" + LocalDate.now() + ".csv\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"employees_" + LocalDate.now(clock) + ".csv\"")
                 .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
                 .body(csv);
     }
@@ -50,7 +53,7 @@ public class ReportController {
     public ResponseEntity<byte[]> exportAttendanceCsv(
             @RequestParam(name = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(name = "departmentId", required = false) UUID departmentId) {
-        LocalDate targetDate = date != null ? date : LocalDate.now();
+        LocalDate targetDate = date != null ? date : LocalDate.now(clock);
         byte[] csv = exportService.generateAttendanceCsv(targetDate, departmentId);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"attendance_" + targetDate + ".csv\"")
@@ -65,7 +68,7 @@ public class ReportController {
     public ResponseEntity<byte[]> exportAuditCsv(@AuthenticationPrincipal CustomUserDetails principal) {
         byte[] csv = exportService.generateAuditCsv(principal);
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"audit_trail_" + LocalDate.now() + ".csv\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"audit_trail_" + LocalDate.now(clock) + ".csv\"")
                 .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
                 .body(csv);
     }

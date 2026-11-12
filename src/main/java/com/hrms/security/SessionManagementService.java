@@ -20,6 +20,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -38,13 +39,16 @@ public class SessionManagementService {
     private final UserSessionRepository userSessionRepository;
     private final UserRepository userRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final Clock clock;
 
     public SessionManagementService(UserSessionRepository userSessionRepository,
                                     UserRepository userRepository,
-                                    JdbcTemplate jdbcTemplate) {
+                                    JdbcTemplate jdbcTemplate,
+                                    Clock clock) {
         this.userSessionRepository = userSessionRepository;
         this.userRepository = userRepository;
         this.jdbcTemplate = jdbcTemplate;
+        this.clock = clock;
     }
 
     @Transactional
@@ -71,7 +75,7 @@ public class SessionManagementService {
         userSession.setUser(user);
         userSession.setIpAddress(ipAddress);
         userSession.setUserAgent(userAgent);
-        userSession.setLoginAt(Instant.now());
+        userSession.setLoginAt(Instant.now(clock));
 
         userSessionRepository.save(userSession);
         log.info("Session started: user={}, role={}, sessionId={}, ip={}",
@@ -85,7 +89,7 @@ public class SessionManagementService {
         }
         userSessionRepository.findBySessionId(sessionId).ifPresent(userSession -> {
             if (userSession.getLogoutAt() == null) {
-                userSession.setLogoutAt(Instant.now());
+                userSession.setLogoutAt(Instant.now(clock));
                 userSession.setEndedReason(SessionEndedReason.LOGOUT);
                 userSessionRepository.save(userSession);
                 log.info("Session logged out: sessionId={}", sessionId);
@@ -124,7 +128,7 @@ public class SessionManagementService {
             throw new BusinessException("Session is already terminated.");
         }
 
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         User revokerUser = userRepository.getReferenceById(revoker.getUserId());
 
         Map<String, Object> previousState = Map.of(
@@ -156,5 +160,46 @@ public class SessionManagementService {
         AuditContext.setTarget(targetSession.getId(), previousState, newState);
         log.info("Session revoked: targetSessionId={}, owner={}, revokedBy={}, springSessionRowsDeleted={}",
                 targetSession.getSessionId(), targetSession.getUser().getEmail(), revoker.getEmail(), deletedRows);
+    }
+
+    /**
+     * Revokes all active sessions for a user (used when suspending login or marking employee INACTIVE).
+     *
+     * @return number of SPRING_SESSION rows deleted
+     */
+    @Transactional
+    public int revokeAllSessionsForUser(UUID userId, CustomUserDetails revoker) {
+        if (userId == null) {
+            return 0;
+        }
+        Instant now = Instant.now(clock);
+        User revokerUser = revoker != null ? userRepository.getReferenceById(revoker.getUserId()) : null;
+
+        List<UserSession> openSessions = userSessionRepository.findActiveSessionsByUserId(userId);
+        int springSessionsDeleted = 0;
+        for (UserSession session : openSessions) {
+            session.setLogoutAt(now);
+            session.setEndedReason(SessionEndedReason.REVOKED);
+            session.setRevokedBy(revokerUser);
+            springSessionsDeleted += jdbcTemplate.update(
+                    "DELETE FROM SPRING_SESSION WHERE SESSION_ID = ?",
+                    session.getSessionId()
+            );
+        }
+        if (!openSessions.isEmpty()) {
+            userSessionRepository.saveAll(openSessions);
+        }
+
+        Optional<User> targetUserOpt = userRepository.findById(userId);
+        if (targetUserOpt.isPresent()) {
+            springSessionsDeleted += jdbcTemplate.update(
+                    "DELETE FROM SPRING_SESSION WHERE LOWER(PRINCIPAL_NAME) = LOWER(?)",
+                    targetUserOpt.get().getEmail()
+            );
+        }
+
+        log.info("Revoked all active sessions for userId={}: trackedClosed={}, springSessionsDeleted={}",
+                userId, openSessions.size(), springSessionsDeleted);
+        return springSessionsDeleted;
     }
 }

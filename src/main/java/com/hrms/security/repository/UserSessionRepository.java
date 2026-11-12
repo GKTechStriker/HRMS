@@ -20,6 +20,9 @@ public interface UserSessionRepository extends JpaRepository<UserSession, UUID> 
     @Query("SELECT us FROM UserSession us JOIN FETCH us.user WHERE us.user.id = :userId ORDER BY us.loginAt DESC")
     List<UserSession> findByUserIdOrderByLoginAtDesc(@Param("userId") UUID userId);
 
+    @Query("SELECT us FROM UserSession us JOIN FETCH us.user WHERE us.user.id = :userId AND us.logoutAt IS NULL")
+    List<UserSession> findActiveSessionsByUserId(@Param("userId") UUID userId);
+
     @Query("SELECT us FROM UserSession us JOIN FETCH us.user ORDER BY us.loginAt DESC")
     List<UserSession> findAllOrderByLoginAtDesc();
 }

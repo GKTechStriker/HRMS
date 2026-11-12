@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.UUID;
 
 /**
@@ -35,15 +37,18 @@ public class EmployeeController {
     private final EmployeeCsvImportService csvImportService;
     private final DepartmentService departmentService;
     private final EmployeeRepository employeeRepository;
+    private final Clock clock;
 
     public EmployeeController(EmployeeService employeeService,
                               EmployeeCsvImportService csvImportService,
                               DepartmentService departmentService,
-                              EmployeeRepository employeeRepository) {
+                              EmployeeRepository employeeRepository,
+                              Clock clock) {
         this.employeeService = employeeService;
         this.csvImportService = csvImportService;
         this.departmentService = departmentService;
         this.employeeRepository = employeeRepository;
+        this.clock = clock;
     }
 
     @GetMapping
@@ -77,7 +82,9 @@ public class EmployeeController {
     @GetMapping("/new")
     @PreAuthorize("hasRole('HR_ADMIN')")
     public String newEmployeeForm(Model model) {
-        model.addAttribute("employeeForm", new EmployeeFormDto());
+        EmployeeFormDto form = new EmployeeFormDto();
+        form.setDateOfJoining(LocalDate.now(clock));
+        model.addAttribute("employeeForm", form);
         model.addAttribute("editMode", false);
         populateFormLookups(model);
         return "employees/form";

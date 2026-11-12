@@ -12,7 +12,7 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/hrms_springboot}
     username: ${DB_USERNAME:hrms_spring}
-    password: ${DB_PASSWORD}
+    password: ${DB_PASSWORD:change_me}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -70,6 +70,7 @@ server:
 
 # HRMS Custom Security & Session Settings (Section 6.1)
 hrms:
+  timezone: ${HRMS_TIMEZONE:Asia/Kolkata}
   session:
     absolute-timeout-hours: ${HRMS_SESSION_ABSOLUTE_TIMEOUT_HOURS:8}
   seed:
@@ -77,7 +78,7 @@ hrms:
   demo-hints:
     enabled: ${HRMS_DEMO_HINTS_ENABLED:true}
   security:
-    default-initial-password: ${HRMS_DEFAULT_USER_PASSWORD}
+    default-initial-password: ${HRMS_DEFAULT_USER_PASSWORD:change_me_initial_password}
   attendance:
     finalizer-cron: ${HRMS_ATTENDANCE_FINALIZER_CRON:0 59 23 * * MON-FRI}
 
