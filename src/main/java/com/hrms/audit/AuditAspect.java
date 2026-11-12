@@ -19,8 +19,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.lang.reflect.Method;
+import java.time.Clock;
 import java.time.Instant;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -36,10 +36,14 @@ public class AuditAspect {
 
     private final AuditLogRepository auditLogRepository;
     private final UserRepository userRepository;
+    private final Clock clock;
 
-    public AuditAspect(AuditLogRepository auditLogRepository, UserRepository userRepository) {
+    public AuditAspect(AuditLogRepository auditLogRepository,
+                       UserRepository userRepository,
+                       Clock clock) {
         this.auditLogRepository = auditLogRepository;
         this.userRepository = userRepository;
+        this.clock = clock;
     }
 
     @Around("@annotation(audited)")
@@ -79,11 +83,22 @@ public class AuditAspect {
         UUID targetId = snapshot != null && snapshot.targetId() != null
                 ? snapshot.targetId()
                 : resolveTargetId(result, joinPoint.getArgs());
+        UUID resolvedTargetId = targetId != null ? targetId : principal.getUserId();
+
+        if (snapshot == null) {
+            log.warn("Audited action '{}' ({}) completed without AuditContext.setTarget(...); writing structured fallback metadata.",
+                    audited.action(), joinPoint.getSignature().toShortString());
+        }
 
         Map<String, Object> previousData = snapshot != null ? snapshot.previousData() : null;
         Map<String, Object> newData = snapshot != null ? snapshot.newData() : null;
         if (newData == null && result != null) {
-            newData = Map.of("resultSummary", result.toString());
+            newData = Map.of(
+                    "targetType", audited.targetType(),
+                    "targetId", resolvedTargetId.toString(),
+                    "resultType", result.getClass().getSimpleName(),
+                    "snapshotMissing", true
+            );
         }
 
         AuditLog entry = new AuditLog();
@@ -92,11 +107,11 @@ public class AuditAspect {
         entry.setHrCode(principal.getHrCode());
         entry.setAction(audited.action());
         entry.setTargetType(audited.targetType());
-        entry.setTargetId(targetId != null ? targetId : principal.getUserId());
+        entry.setTargetId(resolvedTargetId);
         entry.setPreviousData(previousData);
         entry.setNewData(newData);
         entry.setIpAddress(ipAddress);
-        entry.setOccurredAt(Instant.now());
+        entry.setOccurredAt(Instant.now(clock));
 
         auditLogRepository.save(entry);
         log.info("Audit recorded: action={}, actor={}, hrCode={}, session={}, targetType={}, targetId={}",

@@ -128,14 +128,11 @@
                         <span th:text="${record.workMode.displayName}"></span>
                     </td>
                     <td class="py-3 px-4 font-mono text-xs text-slate-700"
-                        th:text="${record.clockIn != null ? #temporals.format(record.clockIn, 'hh:mm a') : '-'}"></td>
+                        th:text="${@timeFmt.formatDateTime(record.clockIn, 'hh:mm a')}"></td>
                     <td class="py-3 px-4 font-mono text-xs text-slate-700"
-                        th:text="${record.clockOut != null ? #temporals.format(record.clockOut, 'hh:mm a') : '-'}"></td>
-                    <td class="py-3 px-4 font-mono text-xs text-slate-700">
-                        <span th:if="${record.durationMinutes != null}"
-                              th:text="${(record.durationMinutes / 60) + 'h ' + (record.durationMinutes % 60) + 'm'}"></span>
-                        <span th:if="${record.durationMinutes == null}">-</span>
-                    </td>
+                        th:text="${@timeFmt.formatDateTime(record.clockOut, 'hh:mm a')}"></td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-700"
+                        th:text="${@timeFmt.formatDuration(record.durationMinutes)}">-</td>
                     <td class="py-3 px-4">
                         <span th:text="${record.status.displayName}"
                               class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
@@ -162,8 +159,8 @@
                                 th:data-date="${record.workDate}"
                                 th:data-status="${record.status}"
                                 th:data-mode="${record.workMode}"
-                                th:data-in="${record.clockIn != null ? #temporals.format(record.clockIn, 'HH:mm') : ''}"
-                                th:data-out="${record.clockOut != null ? #temporals.format(record.clockOut, 'HH:mm') : ''}"
+                                th:data-in="${@timeFmt.formatDateTimeOrEmpty(record.clockIn, 'HH:mm')}"
+                                th:data-out="${@timeFmt.formatDateTimeOrEmpty(record.clockOut, 'HH:mm')}"
                                 th:data-reason="${record.correctionReason != null ? record.correctionReason : ''}"
                                 onclick="openCorrectionModal(this)">
                             Correct

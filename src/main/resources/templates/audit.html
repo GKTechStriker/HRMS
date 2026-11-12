@@ -42,7 +42,8 @@
                     </td>
                 </tr>
                 <tr th:each="entry : ${auditLogs}" class="hover:bg-slate-50 align-top">
-                    <td class="px-4 py-3 font-mono text-xs text-slate-600" th:text="${entry.occurredAt}">Time</td>
+                    <td class="px-4 py-3 font-mono text-xs text-slate-600"
+                        th:text="${@timeFmt.formatInstant(entry.occurredAt, 'dd MMM yyyy, hh:mm:ss a')}">Time</td>
                     <td class="px-4 py-3 font-medium text-slate-800" th:text="${entry.user.email}">hr1@company.com</td>
                     <td class="px-4 py-3 font-mono text-xs text-blue-700" th:text="${entry.hrCode != null ? entry.hrCode : '—'}">HR-001</td>
                     <td class="px-4 py-3">

@@ -119,7 +119,7 @@
                              th:text="'Reason: ' + ${req.rejectionReason}"></div>
                     </td>
                     <td class="py-3 px-4 text-xs text-slate-400"
-                        th:text="${req.createdAt != null ? #temporals.format(req.createdAt, 'dd MMM yyyy, hh:mm a') : '-'}"></td>
+                        th:text="${@timeFmt.formatInstant(req.createdAt, 'dd MMM yyyy, hh:mm a')}"></td>
                     <td class="py-3 px-4 text-right">
                         <form th:if="${req.status.name() == 'PENDING'}"
                               th:action="@{/leaves/{id}/cancel(id=${req.id})}" method="post"

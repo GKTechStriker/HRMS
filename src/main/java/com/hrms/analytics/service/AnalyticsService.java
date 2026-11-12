@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,13 +31,16 @@ public class AnalyticsService {
     private final EmployeeRepository employeeRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final LeaveRequestRepository leaveRequestRepository;
+    private final Clock clock;
 
     public AnalyticsService(EmployeeRepository employeeRepository,
                             AttendanceRecordRepository attendanceRecordRepository,
-                            LeaveRequestRepository leaveRequestRepository) {
+                            LeaveRequestRepository leaveRequestRepository,
+                            Clock clock) {
         this.employeeRepository = employeeRepository;
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.leaveRequestRepository = leaveRequestRepository;
+        this.clock = clock;
     }
 
     /**
@@ -61,7 +65,7 @@ public class AnalyticsService {
      */
     public List<AttendanceTrendDto> getAttendanceTrends(int days) {
         int window = days <= 0 ? 14 : Math.min(days, 60);
-        LocalDate endDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now(clock);
         LocalDate startDate = endDate.minusDays(window - 1);
 
         Map<LocalDate, AttendanceTrendDto> trendMap = new LinkedHashMap<>();

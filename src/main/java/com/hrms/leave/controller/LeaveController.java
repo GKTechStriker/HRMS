@@ -20,6 +20,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -36,15 +37,18 @@ public class LeaveController {
     private final LeaveBalanceService leaveBalanceService;
     private final LeaveTypeRepository leaveTypeRepository;
     private final EmployeeRepository employeeRepository;
+    private final Clock clock;
 
     public LeaveController(LeaveService leaveService,
                            LeaveBalanceService leaveBalanceService,
                            LeaveTypeRepository leaveTypeRepository,
-                           EmployeeRepository employeeRepository) {
+                           EmployeeRepository employeeRepository,
+                           Clock clock) {
         this.leaveService = leaveService;
         this.leaveBalanceService = leaveBalanceService;
         this.leaveTypeRepository = leaveTypeRepository;
         this.employeeRepository = employeeRepository;
+        this.clock = clock;
     }
 
     /**
@@ -55,7 +59,7 @@ public class LeaveController {
         UUID userId = userDetails.getUserId();
         Optional<Employee> empOpt = employeeRepository.findByUserId(userId);
 
-        int currentYear = LocalDate.now().getYear();
+        int currentYear = LocalDate.now(clock).getYear();
 
         if (empOpt.isPresent()) {
             Employee emp = empOpt.get();

@@ -1,0 +1,18 @@
+# Production Profile Configuration
+# Enforces explicit secrets with zero hardcoded fallback defaults.
+
+spring:
+  datasource:
+    password: ${DB_PASSWORD}
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+
+hrms:
+  demo-hints:
+    enabled: false
+  security:
+    default-initial-password: ${HRMS_DEFAULT_USER_PASSWORD}

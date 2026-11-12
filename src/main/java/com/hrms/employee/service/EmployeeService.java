@@ -13,6 +13,7 @@ import com.hrms.employee.repository.EmployeeRepository;
 import com.hrms.exception.BusinessException;
 import com.hrms.exception.ResourceNotFoundException;
 import com.hrms.security.CustomUserDetails;
+import com.hrms.security.SessionManagementService;
 import com.hrms.security.entity.Role;
 import com.hrms.security.entity.User;
 import com.hrms.security.repository.UserRepository;
@@ -22,6 +23,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +48,7 @@ public class EmployeeService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JdbcTemplate jdbcTemplate;
+    private final SessionManagementService sessionManagementService;
     private final String defaultInitialPassword;
 
     public EmployeeService(EmployeeRepository employeeRepository,
@@ -53,13 +57,15 @@ public class EmployeeService {
                            UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
                            JdbcTemplate jdbcTemplate,
-                           @Value("${hrms.security.default-initial-password}") String defaultInitialPassword) {
+                           SessionManagementService sessionManagementService,
+                           @Value("${hrms.security.default-initial-password:}") String defaultInitialPassword) {
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
         this.jobRoleRepository = jobRoleRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jdbcTemplate = jdbcTemplate;
+        this.sessionManagementService = sessionManagementService;
         this.defaultInitialPassword = defaultInitialPassword;
     }
 
@@ -135,11 +141,15 @@ public class EmployeeService {
             if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
                 throw new BusinessException("A user account already exists with email: " + normalizedEmail);
             }
-            linkedUser = new User();
-            linkedUser.setEmail(normalizedEmail);
             String rawPassword = (dto.getPassword() != null && !dto.getPassword().isBlank())
                     ? dto.getPassword()
                     : defaultInitialPassword;
+            if (rawPassword == null || rawPassword.isBlank()) {
+                throw new BusinessException(
+                        "Initial password is required when hrms.security.default-initial-password is not configured.");
+            }
+            linkedUser = new User();
+            linkedUser.setEmail(normalizedEmail);
             linkedUser.setPasswordHash(passwordEncoder.encode(rawPassword));
             Role assignedRole = dto.getSystemRole() != null ? dto.getSystemRole() : Role.EMPLOYEE;
             if (assignedRole == Role.SUPER_ADMIN) {
@@ -184,6 +194,7 @@ public class EmployeeService {
                 .orElseThrow(() -> ResourceNotFoundException.forEntity("Employee", employeeId.toString()));
 
         Map<String, Object> beforeSnapshot = toAuditSnapshot(emp);
+        EmployeeStatus previousStatus = emp.getStatus();
 
         Department dept = departmentRepository.findById(dto.getDepartmentId())
                 .orElseThrow(() -> ResourceNotFoundException.forEntity("Department", dto.getDepartmentId().toString()));
@@ -208,8 +219,21 @@ public class EmployeeService {
             emp.setReportsTo(null);
         }
 
+        int revokedSessions = 0;
+        if (previousStatus != EmployeeStatus.INACTIVE
+                && emp.getStatus() == EmployeeStatus.INACTIVE
+                && emp.getUser() != null) {
+            User user = emp.getUser();
+            user.setActive(false);
+            userRepository.save(user);
+            revokedSessions = sessionManagementService.revokeAllSessionsForUser(user.getId(), currentActor());
+        }
+
         emp = employeeRepository.save(emp);
         Map<String, Object> afterSnapshot = toAuditSnapshot(emp);
+        if (revokedSessions > 0) {
+            afterSnapshot.put("revokedSessionCount", revokedSessions);
+        }
 
         AuditContext.setTarget(emp.getId(), beforeSnapshot, afterSnapshot);
         return emp;
@@ -225,19 +249,30 @@ public class EmployeeService {
         Map<String, Object> beforeSnapshot = toAuditSnapshot(emp);
 
         emp.setStatus(EmployeeStatus.INACTIVE);
+        int revokedSessions = 0;
         if (suspendLogin && emp.getUser() != null) {
             User user = emp.getUser();
             user.setActive(false);
             userRepository.save(user);
+            revokedSessions = sessionManagementService.revokeAllSessionsForUser(user.getId(), currentActor());
         }
         emp = employeeRepository.save(emp);
 
         Map<String, Object> afterSnapshot = toAuditSnapshot(emp);
         afterSnapshot.put("deactivationReason", reason != null && !reason.isBlank() ? reason.trim() : "HR Deactivation");
         afterSnapshot.put("loginSuspended", suspendLogin);
+        afterSnapshot.put("revokedSessionCount", revokedSessions);
 
         AuditContext.setTarget(emp.getId(), beforeSnapshot, afterSnapshot);
         return emp;
+    }
+
+    private CustomUserDetails currentActor() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails cud) {
+            return cud;
+        }
+        return null;
     }
 
     private Map<String, Object> toAuditSnapshot(Employee emp) {

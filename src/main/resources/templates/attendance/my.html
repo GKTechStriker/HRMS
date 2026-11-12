@@ -96,7 +96,7 @@
                             Active Shift
                         </span>
                         <p class="text-base font-bold text-slate-800 mt-2">
-                            Clocked in at <span th:text="${#temporals.format(todayRecord.clockIn, 'hh:mm a')}"></span>
+                            Clocked in at <span th:text="${@timeFmt.formatDateTime(todayRecord.clockIn, 'hh:mm a')}"></span>
                         </p>
                         <p class="text-xs text-slate-500 mt-0.5">
                             Mode: <span class="font-medium text-slate-700" th:text="${todayRecord.workMode.displayName}"></span> |
@@ -143,16 +143,16 @@
                     <div class="grid grid-cols-3 gap-4 text-center py-2">
                         <div class="p-3 bg-white rounded-lg border border-slate-200">
                             <p class="text-xs text-slate-500 uppercase font-semibold">Clock In</p>
-                            <p class="text-sm font-bold text-slate-800 mt-1" th:text="${#temporals.format(todayRecord.clockIn, 'hh:mm a')}"></p>
+                            <p class="text-sm font-bold text-slate-800 mt-1" th:text="${@timeFmt.formatDateTime(todayRecord.clockIn, 'hh:mm a')}"></p>
                         </div>
                         <div class="p-3 bg-white rounded-lg border border-slate-200">
                             <p class="text-xs text-slate-500 uppercase font-semibold">Clock Out</p>
-                            <p class="text-sm font-bold text-slate-800 mt-1" th:text="${#temporals.format(todayRecord.clockOut, 'hh:mm a')}"></p>
+                            <p class="text-sm font-bold text-slate-800 mt-1" th:text="${@timeFmt.formatDateTime(todayRecord.clockOut, 'hh:mm a')}"></p>
                         </div>
                         <div class="p-3 bg-white rounded-lg border border-slate-200">
                             <p class="text-xs text-slate-500 uppercase font-semibold">Duration</p>
                             <p class="text-sm font-bold text-slate-800 mt-1"
-                               th:text="${(todayRecord.durationMinutes / 60) + 'h ' + (todayRecord.durationMinutes % 60) + 'm'}">
+                               th:text="${@timeFmt.formatDuration(todayRecord.durationMinutes)}">
                             </p>
                         </div>
                     </div>
@@ -250,14 +250,11 @@
                         <span th:text="${record.workMode.displayName}" class="text-xs text-slate-700"></span>
                     </td>
                     <td class="py-3 px-4 font-mono text-xs text-slate-700"
-                        th:text="${record.clockIn != null ? #temporals.format(record.clockIn, 'hh:mm a') : '-'}"></td>
+                        th:text="${@timeFmt.formatDateTime(record.clockIn, 'hh:mm a')}"></td>
                     <td class="py-3 px-4 font-mono text-xs text-slate-700"
-                        th:text="${record.clockOut != null ? #temporals.format(record.clockOut, 'hh:mm a') : '-'}"></td>
-                    <td class="py-3 px-4 font-mono text-xs text-slate-700">
-                        <span th:if="${record.durationMinutes != null}"
-                              th:text="${(record.durationMinutes / 60) + 'h ' + (record.durationMinutes % 60) + 'm'}"></span>
-                        <span th:if="${record.durationMinutes == null}">-</span>
-                    </td>
+                        th:text="${@timeFmt.formatDateTime(record.clockOut, 'hh:mm a')}"></td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-700"
+                        th:text="${@timeFmt.formatDuration(record.durationMinutes)}">-</td>
                     <td class="py-3 px-4">
                         <span th:text="${record.status.displayName}"
                               class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"

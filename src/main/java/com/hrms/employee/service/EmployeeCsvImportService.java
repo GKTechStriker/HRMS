@@ -133,34 +133,57 @@ public class EmployeeCsvImportService {
         List<CsvImportResultDto.RowPreview> rows = new ArrayList<>();
         List<String> errors = new ArrayList<>();
         Set<String> seenEmailsInFile = new HashSet<>();
+        Set<String> existingDbEmails = new HashSet<>(userRepository.findAllLowercaseEmails());
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
 
             String line;
             int lineNum = 0;
+            boolean headerChecked = false;
             while ((line = reader.readLine()) != null) {
                 lineNum++;
+                if (lineNum == 1 && line.startsWith("\uFEFF")) {
+                    line = line.substring(1);
+                }
                 String trimmed = line.trim();
                 if (trimmed.isEmpty() || trimmed.startsWith("#")) {
                     continue;
                 }
-                // Skip header line
-                if (lineNum == 1 && trimmed.toLowerCase().contains("full_name")) {
+
+                List<String> parsedCols;
+                try {
+                    parsedCols = parseCsvLine(trimmed);
+                } catch (IllegalArgumentException parseEx) {
+                    String errMsg = parseEx.getMessage();
+                    errors.add("Line " + lineNum + " (Malformed CSV): " + errMsg);
+                    rows.add(new CsvImportResultDto.RowPreview(
+                            lineNum, "", "", "", "", "", null, null, "EMPLOYEE", false, errMsg));
+                    headerChecked = true;
                     continue;
                 }
 
-                String[] cols = trimmed.split(",", -1);
+                // Skip header line dynamically on first non-empty/non-comment row
+                if (!headerChecked) {
+                    headerChecked = true;
+                    String firstCol = parsedCols.isEmpty() ? "" : parsedCols.get(0).trim().toLowerCase();
+                    if (firstCol.equals("full_name") || firstCol.contains("full_name")) {
+                        continue;
+                    }
+                }
+
                 List<String> rowErrors = new ArrayList<>();
 
-                String fullName = cols.length > 0 ? cols[0].trim() : "";
-                String email = cols.length > 1 ? cols[1].trim().toLowerCase() : "";
-                String phone = cols.length > 2 ? cols[2].trim() : "";
-                String departmentName = cols.length > 3 ? cols[3].trim() : "";
-                String jobRoleTitle = cols.length > 4 ? cols[4].trim() : "";
-                String dobStr = cols.length > 5 ? cols[5].trim() : "";
-                String dojStr = cols.length > 6 ? cols[6].trim() : "";
-                String roleStr = cols.length > 7 && !cols[7].trim().isEmpty() ? cols[7].trim().toUpperCase() : "EMPLOYEE";
+                String fullName = parsedCols.size() > 0 ? parsedCols.get(0).trim() : "";
+                String email = parsedCols.size() > 1 ? parsedCols.get(1).trim().toLowerCase() : "";
+                String phone = parsedCols.size() > 2 ? parsedCols.get(2).trim() : "";
+                String departmentName = parsedCols.size() > 3 ? parsedCols.get(3).trim() : "";
+                String jobRoleTitle = parsedCols.size() > 4 ? parsedCols.get(4).trim() : "";
+                String dobStr = parsedCols.size() > 5 ? parsedCols.get(5).trim() : "";
+                String dojStr = parsedCols.size() > 6 ? parsedCols.get(6).trim() : "";
+                String roleStr = parsedCols.size() > 7 && !parsedCols.get(7).trim().isEmpty()
+                        ? parsedCols.get(7).trim().toUpperCase()
+                        : "EMPLOYEE";
 
                 if (fullName.isEmpty()) {
                     rowErrors.add("Missing full_name");
@@ -171,7 +194,7 @@ public class EmployeeCsvImportService {
                     if (!seenEmailsInFile.add(email)) {
                         rowErrors.add("Duplicate email within CSV: " + email);
                     }
-                    if (userRepository.existsByEmailIgnoreCase(email)) {
+                    if (existingDbEmails.contains(email)) {
                         rowErrors.add("Email already exists in database: " + email);
                     }
                 }
@@ -240,5 +263,48 @@ public class EmployeeCsvImportService {
                 rows,
                 errors
         );
+    }
+
+    /**
+     * Parses a single RFC-4180 CSV line supporting quoted fields, embedded commas, and escaped double quotes ("").
+     */
+    static List<String> parseCsvLine(String line) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
+
+        for (int i = 0; i < line.length(); i++) {
+            char ch = line.charAt(i);
+            if (inQuotes) {
+                if (ch == '"') {
+                    if (i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                        current.append('"');
+                        i++;
+                    } else {
+                        inQuotes = false;
+                    }
+                } else {
+                    current.append(ch);
+                }
+            } else {
+                if (ch == '"') {
+                    if (!current.isEmpty()) {
+                        throw new IllegalArgumentException("Unexpected quote character inside unquoted field");
+                    }
+                    inQuotes = true;
+                } else if (ch == ',') {
+                    fields.add(current.toString());
+                    current.setLength(0);
+                } else {
+                    current.append(ch);
+                }
+            }
+        }
+
+        if (inQuotes) {
+            throw new IllegalArgumentException("Unclosed quoted field in CSV row");
+        }
+        fields.add(current.toString());
+        return fields;
     }
 }

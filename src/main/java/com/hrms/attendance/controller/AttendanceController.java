@@ -13,6 +13,7 @@ import com.hrms.exception.BusinessException;
 import com.hrms.security.CustomUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,6 +23,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -38,13 +40,16 @@ public class AttendanceController {
     private final AttendanceService attendanceService;
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
+    private final Clock clock;
 
     public AttendanceController(AttendanceService attendanceService,
                                 EmployeeRepository employeeRepository,
-                                DepartmentRepository departmentRepository) {
+                                DepartmentRepository departmentRepository,
+                                Clock clock) {
         this.attendanceService = attendanceService;
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
+        this.clock = clock;
     }
 
     /**
@@ -58,7 +63,7 @@ public class AttendanceController {
         UUID userId = userDetails.getUserId();
         Optional<Employee> empOpt = employeeRepository.findByUserId(userId);
 
-        LocalDate now = LocalDate.now();
+        LocalDate now = LocalDate.now(clock);
         int targetYear = (year != null && year >= 2020) ? year : now.getYear();
         int targetMonth = (month != null && month >= 1 && month <= 12) ? month : now.getMonthValue();
 
@@ -97,6 +102,8 @@ public class AttendanceController {
             redirectAttributes.addFlashAttribute("successMessage", "Clocked in successfully! Have a productive day.");
         } catch (BusinessException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        } catch (DataIntegrityViolationException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "You have already clocked in for today.");
         }
         return "redirect:/attendance/my";
     }
@@ -127,7 +134,7 @@ public class AttendanceController {
     public String manageAttendance(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
                                    @RequestParam(required = false) UUID departmentId,
                                    Model model) {
-        LocalDate selectedDate = (date != null) ? date : LocalDate.now();
+        LocalDate selectedDate = (date != null) ? date : LocalDate.now(clock);
 
         List<AttendanceRecord> records = attendanceService.getDailyAttendance(selectedDate, departmentId);
         DailyAttendanceSummaryDto summary = attendanceService.getDailySummary(selectedDate);

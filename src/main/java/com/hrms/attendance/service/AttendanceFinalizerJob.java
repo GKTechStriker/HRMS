@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
@@ -24,7 +25,7 @@ import java.util.List;
  * - Detects active employees with missing punches.
  * - If the employee has an approved leave, creates an ON_LEAVE record.
  * - Otherwise, automatically creates an ABSENT record.
- * - Skips weekends and public holidays.
+ * - Skips weekends and public holidays (exact & recurring).
  */
 @Component
 public class AttendanceFinalizerJob {
@@ -34,22 +35,25 @@ public class AttendanceFinalizerJob {
     private final AttendanceRecordRepository attendanceRecordRepository;
     private final HolidayRepository holidayRepository;
     private final LeaveRequestRepository leaveRequestRepository;
+    private final Clock clock;
 
     public AttendanceFinalizerJob(AttendanceRecordRepository attendanceRecordRepository,
                                   HolidayRepository holidayRepository,
-                                  LeaveRequestRepository leaveRequestRepository) {
+                                  LeaveRequestRepository leaveRequestRepository,
+                                  Clock clock) {
         this.attendanceRecordRepository = attendanceRecordRepository;
         this.holidayRepository = holidayRepository;
         this.leaveRequestRepository = leaveRequestRepository;
+        this.clock = clock;
     }
 
     /**
-     * Executes at 23:59 every Monday through Friday by default.
+     * Executes at 23:59 every Monday through Friday by default in configured business timezone.
      */
-    @Scheduled(cron = "${hrms.attendance.finalizer-cron:0 59 23 * * MON-FRI}")
+    @Scheduled(cron = "${hrms.attendance.finalizer-cron:0 59 23 * * MON-FRI}", zone = "${hrms.timezone:Asia/Kolkata}")
     @Transactional
     public void finalizeDailyAttendance() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(clock);
         log.info("Starting nightly attendance finalization for date {}", today);
 
         // Skip weekends
@@ -58,8 +62,8 @@ public class AttendanceFinalizerJob {
             return;
         }
 
-        // Skip holidays
-        if (holidayRepository.existsByHolidayDate(today)) {
+        // Skip exact or recurring holidays
+        if (holidayRepository.isPublicHoliday(today)) {
             log.info("Skipping attendance finalization: {} is a registered public holiday", today);
             return;
         }
