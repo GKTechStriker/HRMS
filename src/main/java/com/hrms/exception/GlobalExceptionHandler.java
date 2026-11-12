@@ -1,5 +1,7 @@
 package com.hrms.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -19,6 +21,8 @@ import java.time.LocalDateTime;
  */
 @RestControllerAdvice(annotations = RestController.class)
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     
     /**
      * Handle ResourceNotFoundException (404)
@@ -63,17 +67,18 @@ public class GlobalExceptionHandler {
     }
     
     /**
-     * Handle generic exceptions (500)
+     * Handle generic exceptions (500) without exposing internal details (GAP-05)
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(
             Exception ex, 
             WebRequest request) {
+        log.error("Unhandled REST API error on {}: {}", request.getDescription(false), ex.getMessage(), ex);
         ErrorResponse error = new ErrorResponse(
             LocalDateTime.now(),
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             "Internal Server Error",
-            ex.getMessage(),
+            "An unexpected internal error occurred. Please try again later.",
             request.getDescription(false)
         );
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -82,7 +87,7 @@ public class GlobalExceptionHandler {
     /**
      * Standard error response format
      */
-    static class ErrorResponse {
+    public static class ErrorResponse {
         public LocalDateTime timestamp;
         public int status;
         public String error;

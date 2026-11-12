@@ -100,10 +100,13 @@ public class LeaveController {
             leaveService.applyForLeave(userDetails.getUserId(), dto);
             redirectAttributes.addFlashAttribute("successMessage",
                     "Leave application submitted successfully! Provisional hold applied to your balance.");
-        } catch (BusinessException ex) {
+        } catch (BusinessException | com.hrms.exception.ResourceNotFoundException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error submitting leave: " + ex.getMessage());
+            org.slf4j.LoggerFactory.getLogger(LeaveController.class)
+                    .error("Unexpected error submitting leave for userId={}", userDetails.getUserId(), ex);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Unable to submit leave request due to an unexpected error.");
         }
 
         return "redirect:/leaves/my";
@@ -119,8 +122,13 @@ public class LeaveController {
         try {
             leaveService.cancelLeave(requestId, userDetails.getUserId());
             redirectAttributes.addFlashAttribute("successMessage", "Leave request cancelled. Provisional hold released.");
-        } catch (Exception ex) {
+        } catch (BusinessException | com.hrms.exception.ResourceNotFoundException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to cancel leave: " + ex.getMessage());
+        } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(LeaveController.class)
+                    .error("Unexpected error cancelling leave requestId={}", requestId, ex);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Unable to cancel leave request due to an unexpected error.");
         }
         return "redirect:/leaves/my";
     }
@@ -150,8 +158,13 @@ public class LeaveController {
             leaveService.approveLeave(requestId, userDetails.getUserId());
             redirectAttributes.addFlashAttribute("successMessage",
                     "Leave request APPROVED. Attendance records synchronized to 'ON_LEAVE'.");
-        } catch (Exception ex) {
+        } catch (BusinessException | com.hrms.exception.ResourceNotFoundException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "Approval failed: " + ex.getMessage());
+        } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(LeaveController.class)
+                    .error("Unexpected error approving leave requestId={}", requestId, ex);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Approval failed due to an unexpected error.");
         }
         return "redirect:/leaves/manage";
     }
@@ -169,8 +182,13 @@ public class LeaveController {
             leaveService.rejectLeave(requestId, rejectionReason, userDetails.getUserId());
             redirectAttributes.addFlashAttribute("successMessage",
                     "Leave request REJECTED. Provisional hold released back to employee.");
-        } catch (Exception ex) {
+        } catch (BusinessException | com.hrms.exception.ResourceNotFoundException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "Rejection failed: " + ex.getMessage());
+        } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(LeaveController.class)
+                    .error("Unexpected error rejecting leave requestId={}", requestId, ex);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Rejection failed due to an unexpected error.");
         }
         return "redirect:/leaves/manage";
     }

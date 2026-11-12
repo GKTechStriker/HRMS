@@ -143,15 +143,12 @@ public class AuditAspect {
         return UUID.randomUUID();
     }
 
+    /**
+     * Resolves client IP using servlet remote address; reverse-proxy forwarding is handled safely
+     * at the container/framework level via server.forward-headers-strategy (GAP-05).
+     */
     public static String extractClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        String realIp = request.getHeader("X-Real-IP");
-        if (realIp != null && !realIp.isBlank()) {
-            return realIp.trim();
-        }
-        return request.getRemoteAddr() != null ? request.getRemoteAddr() : "127.0.0.1";
+        String remoteAddr = request.getRemoteAddr();
+        return (remoteAddr != null && !remoteAddr.isBlank()) ? remoteAddr : "127.0.0.1";
     }
 }

@@ -122,15 +122,35 @@ public class ExportService {
     }
 
     /**
-     * RFC-4180 compliant escaping for CSV cells.
+     * OWASP CSV injection neutralization + RFC-4180 compliant escaping for CSV cells (GAP-04).
      */
-    private String escape(String value) {
+    String escape(String value) {
         if (value == null) {
             return "";
         }
-        if (value.contains(",") || value.contains("\"") || value.contains("\n") || value.contains("\r")) {
-            return "\"" + value.replace("\"", "\"\"") + "\"";
+        String sanitized = value;
+        if (startsWithFormulaTrigger(sanitized)) {
+            sanitized = "'" + sanitized;
         }
-        return value;
+        if (sanitized.contains(",") || sanitized.contains("\"") || sanitized.contains("\n") || sanitized.contains("\r")) {
+            return "\"" + sanitized.replace("\"", "\"\"") + "\"";
+        }
+        return sanitized;
+    }
+
+    private static boolean startsWithFormulaTrigger(String value) {
+        if (value.isEmpty()) {
+            return false;
+        }
+        char first = value.charAt(0);
+        if (isFormulaTriggerChar(first)) {
+            return true;
+        }
+        String leadingStripped = value.stripLeading();
+        return !leadingStripped.isEmpty() && isFormulaTriggerChar(leadingStripped.charAt(0));
+    }
+
+    private static boolean isFormulaTriggerChar(char ch) {
+        return ch == '=' || ch == '+' || ch == '-' || ch == '@' || ch == '\t' || ch == '\r';
     }
 }

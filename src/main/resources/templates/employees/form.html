@@ -85,6 +85,7 @@
                             class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
                         <option value="">— Select Job Role —</option>
                         <option th:each="jr : ${jobRoles}" th:value="${jr.id}"
+                                th:attr="data-dept-id=${jr.department.id}"
                                 th:text="${jr.title + ' (' + jr.department.name + ' · L' + jr.level + ')'}">Role</option>
                     </select>
                     <p th:if="${#fields.hasErrors('jobRoleId')}" th:errors="*{jobRoleId}" class="text-xs text-red-600 mt-1"></p>
@@ -141,5 +142,38 @@
 </main>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>
+<script>
+    (function () {
+        const deptSelect = document.getElementById('departmentId');
+        const roleSelect = document.getElementById('jobRoleId');
+        if (!deptSelect || !roleSelect) return;
+
+        function filterJobRoles(resetIfInvalid) {
+            const selectedDept = deptSelect.value;
+            let selectedStillValid = false;
+            Array.from(roleSelect.options).forEach(function (opt) {
+                if (!opt.value) {
+                    opt.hidden = false;
+                    opt.disabled = false;
+                    return;
+                }
+                const matches = !selectedDept || opt.getAttribute('data-dept-id') === selectedDept;
+                opt.hidden = !matches;
+                opt.disabled = !matches;
+                if (matches && opt.value === roleSelect.value) {
+                    selectedStillValid = true;
+                }
+            });
+            if (resetIfInvalid && roleSelect.value && !selectedStillValid) {
+                roleSelect.value = '';
+            }
+        }
+
+        deptSelect.addEventListener('change', function () {
+            filterJobRoles(true);
+        });
+        filterJobRoles(false);
+    })();
+</script>
 </body>
 </html>

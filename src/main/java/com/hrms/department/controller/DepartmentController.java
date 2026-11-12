@@ -58,8 +58,14 @@ public class DepartmentController {
             redirectAttributes.addFlashAttribute("successMessage",
                     "Department '" + name.trim() + "' created and logged to audit trail.");
             return "redirect:/departments";
-        } catch (Exception ex) {
+        } catch (com.hrms.exception.BusinessException | com.hrms.exception.ResourceNotFoundException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/departments/new";
+        } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(DepartmentController.class)
+                    .error("Unexpected error creating department name={}", name, ex);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Unable to create department due to an unexpected error.");
             return "redirect:/departments/new";
         }
     }
@@ -74,8 +80,13 @@ public class DepartmentController {
             departmentService.createJobRole(title, level, departmentId);
             redirectAttributes.addFlashAttribute("successMessage",
                     "Job Role '" + title.trim() + "' created and logged to audit trail.");
-        } catch (Exception ex) {
+        } catch (com.hrms.exception.BusinessException | com.hrms.exception.ResourceNotFoundException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(DepartmentController.class)
+                    .error("Unexpected error creating job role title={}", title, ex);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Unable to create job role due to an unexpected error.");
         }
         return "redirect:/departments";
     }

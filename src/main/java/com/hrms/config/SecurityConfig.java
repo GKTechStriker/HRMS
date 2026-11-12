@@ -1,8 +1,10 @@
 package com.hrms.config;
 
+import com.hrms.security.AbsoluteSessionTimeoutFilter;
 import com.hrms.security.CustomUserDetails;
 import com.hrms.security.SessionManagementService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,11 +18,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.time.Clock;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Spring Security Configuration (Section 4 & Section 8.3)
@@ -35,21 +40,34 @@ import java.util.Arrays;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    private final long absoluteTimeoutHours;
+    private final List<String> corsAllowedOrigins;
+
+    public SecurityConfig(
+            @Value("${hrms.session.absolute-timeout-hours:8}") long absoluteTimeoutHours,
+            @Value("${hrms.cors.allowed-origins:}") List<String> corsAllowedOrigins) {
+        this.absoluteTimeoutHours = absoluteTimeoutHours;
+        this.corsAllowedOrigins = corsAllowedOrigins == null ? List.of() : corsAllowedOrigins;
+    }
+
     /**
      * Configure HTTP security filter chain.
      * Permits public access to /api/health, auth pages, and static assets.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   SessionManagementService sessionManagementService) throws Exception {
+                                                   SessionManagementService sessionManagementService,
+                                                   Clock clock) throws Exception {
+        AbsoluteSessionTimeoutFilter absoluteTimeoutFilter =
+                new AbsoluteSessionTimeoutFilter(sessionManagementService, clock, absoluteTimeoutHours);
+
         http
             .cors(Customizer.withDefaults())
+            .addFilterAfter(absoluteTimeoutFilter, SecurityContextHolderFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/health",
                     "/login",
-                    "/password/forgot",
-                    "/password/reset",
                     "/error",
                     "/favicon.ico",
                     "/sample/**",
@@ -57,6 +75,8 @@ public class SecurityConfig {
                     "/js/**",
                     "/images/**"
                 ).permitAll()
+                // Self-service account actions (password rotation)
+                .requestMatchers("/account/**").authenticated()
                 // Explicit Scope Exception (Section 4.1): Any authenticated role may call /sessions/{id}/revoke
                 // (Service layer enforces SUPER_ADMIN = any session, others = own session only)
                 .requestMatchers(HttpMethod.POST, "/sessions/*/revoke").authenticated()
@@ -135,24 +155,22 @@ public class SecurityConfig {
     }
 
     /**
-     * Configure CORS for API endpoints
-     * Allows frontend applications to make cross-origin requests
+     * Configure CORS using explicit allowlisted origins (GAP-05).
+     * When hrms.cors.allowed-origins is empty, cross-origin requests are disallowed by default.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allow requests from any origin (for hackathon; restrict in production)
-        configuration.setAllowedOrigins(Arrays.asList("*"));
+        List<String> normalizedOrigins = corsAllowedOrigins.stream()
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList();
 
-        // Allow HTTP methods
+        configuration.setAllowedOrigins(normalizedOrigins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-        // Allow all headers
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-
-        // Allow credentials (cookies, auth headers)
-        configuration.setAllowCredentials(false); // Set to true if using credentials
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "X-CSRF-TOKEN"));
+        configuration.setAllowCredentials(!normalizedOrigins.isEmpty());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

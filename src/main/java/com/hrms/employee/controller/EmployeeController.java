@@ -106,9 +106,16 @@ public class EmployeeController {
             redirectAttributes.addFlashAttribute("successMessage",
                     "Employee " + created.getFullName() + " (" + created.getEmployeeCode() + ") created and audited.");
             return "redirect:/employees/" + created.getId();
-        } catch (Exception ex) {
+        } catch (com.hrms.exception.BusinessException | com.hrms.exception.ResourceNotFoundException ex) {
             model.addAttribute("editMode", false);
             model.addAttribute("errorMessage", ex.getMessage());
+            populateFormLookups(model);
+            return "employees/form";
+        } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(EmployeeController.class)
+                    .error("Unexpected error creating employee", ex);
+            model.addAttribute("editMode", false);
+            model.addAttribute("errorMessage", "Unable to create employee due to an unexpected error.");
             populateFormLookups(model);
             return "employees/form";
         }
@@ -173,10 +180,18 @@ public class EmployeeController {
             redirectAttributes.addFlashAttribute("successMessage",
                     "Employee " + updated.getEmployeeCode() + " updated; field-level changes recorded in audit log.");
             return "redirect:/employees/" + updated.getId();
-        } catch (Exception ex) {
+        } catch (com.hrms.exception.BusinessException | com.hrms.exception.ResourceNotFoundException ex) {
             model.addAttribute("employee", employeeService.getEmployeeForPrincipal(id, principal));
             model.addAttribute("editMode", true);
             model.addAttribute("errorMessage", ex.getMessage());
+            populateFormLookups(model);
+            return "employees/form";
+        } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(EmployeeController.class)
+                    .error("Unexpected error updating employeeId={}", id, ex);
+            model.addAttribute("employee", employeeService.getEmployeeForPrincipal(id, principal));
+            model.addAttribute("editMode", true);
+            model.addAttribute("errorMessage", "Unable to update employee due to an unexpected error.");
             populateFormLookups(model);
             return "employees/form";
         }
@@ -192,8 +207,13 @@ public class EmployeeController {
             Employee deactivated = employeeService.deactivateEmployee(id, suspendLogin, reason);
             redirectAttributes.addFlashAttribute("successMessage",
                     "Employee " + deactivated.getEmployeeCode() + " soft-deactivated (historical records preserved).");
-        } catch (Exception ex) {
+        } catch (com.hrms.exception.BusinessException | com.hrms.exception.ResourceNotFoundException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(EmployeeController.class)
+                    .error("Unexpected error deactivating employeeId={}", id, ex);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Unable to deactivate employee due to an unexpected error.");
         }
         return "redirect:/employees/" + id;
     }
@@ -223,8 +243,13 @@ public class EmployeeController {
                         "Successfully imported " + report.validRows() + " employee record(s) from CSV and recorded audit entry.");
                 return "redirect:/employees";
             }
-        } catch (Exception ex) {
+        } catch (com.hrms.exception.BusinessException ex) {
             model.addAttribute("errorMessage", ex.getMessage());
+            return "employees/import";
+        } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(EmployeeController.class)
+                    .error("Unexpected error processing CSV import", ex);
+            model.addAttribute("errorMessage", "Unable to process CSV import due to an unexpected error.");
             return "employees/import";
         }
     }

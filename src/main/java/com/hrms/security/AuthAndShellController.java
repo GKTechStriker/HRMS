@@ -117,8 +117,15 @@ public class AuthAndShellController {
             sessionManagementService.revokeSession(sessionRecordId, principal);
             redirectAttributes.addFlashAttribute("successMessage",
                     "Session revoked and recorded in the immutable audit trail.");
-        } catch (Exception ex) {
+        } catch (com.hrms.exception.BusinessException
+                 | com.hrms.exception.ResourceNotFoundException
+                 | org.springframework.security.access.AccessDeniedException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(AuthAndShellController.class)
+                    .error("Unexpected error revoking sessionRecordId={}", sessionRecordId, ex);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Unable to revoke session due to an unexpected error.");
         }
         return "redirect:/sessions";
     }

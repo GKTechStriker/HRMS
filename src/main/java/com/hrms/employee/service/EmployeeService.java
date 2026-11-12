@@ -29,8 +29,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -134,6 +136,7 @@ public class EmployeeService {
                 .orElseThrow(() -> ResourceNotFoundException.forEntity("Department", dto.getDepartmentId().toString()));
         JobRole jobRole = jobRoleRepository.findById(dto.getJobRoleId())
                 .orElseThrow(() -> ResourceNotFoundException.forEntity("JobRole", dto.getJobRoleId().toString()));
+        validateDepartmentJobRoleAffinity(dept, jobRole);
 
         User linkedUser = null;
         if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
@@ -200,6 +203,7 @@ public class EmployeeService {
                 .orElseThrow(() -> ResourceNotFoundException.forEntity("Department", dto.getDepartmentId().toString()));
         JobRole jobRole = jobRoleRepository.findById(dto.getJobRoleId())
                 .orElseThrow(() -> ResourceNotFoundException.forEntity("JobRole", dto.getJobRoleId().toString()));
+        validateDepartmentJobRoleAffinity(dept, jobRole);
 
         emp.setFullName(dto.getFullName().trim());
         emp.setDepartment(dept);
@@ -211,9 +215,13 @@ public class EmployeeService {
             emp.setStatus(dto.getStatus());
         }
 
-        if (dto.getReportsToId() != null && !dto.getReportsToId().equals(emp.getId())) {
+        if (dto.getReportsToId() != null) {
+            if (dto.getReportsToId().equals(emp.getId())) {
+                throw new BusinessException("An employee cannot report directly to themselves.");
+            }
             Employee manager = employeeRepository.findById(dto.getReportsToId())
                     .orElseThrow(() -> ResourceNotFoundException.forEntity("Employee", dto.getReportsToId().toString()));
+            validateNoReportingCycle(emp.getId(), manager);
             emp.setReportsTo(manager);
         } else {
             emp.setReportsTo(null);
@@ -273,6 +281,26 @@ public class EmployeeService {
             return cud;
         }
         return null;
+    }
+
+    private void validateDepartmentJobRoleAffinity(Department dept, JobRole jobRole) {
+        if (jobRole.getDepartment() == null || !jobRole.getDepartment().getId().equals(dept.getId())) {
+            String roleDeptName = jobRole.getDepartment() != null ? jobRole.getDepartment().getName() : "N/A";
+            throw new BusinessException("Selected Job Role '" + jobRole.getTitle()
+                    + "' belongs to department '" + roleDeptName + "', not '" + dept.getName() + "'.");
+        }
+    }
+
+    private void validateNoReportingCycle(UUID employeeId, Employee candidateManager) {
+        Set<UUID> visited = new HashSet<>();
+        visited.add(employeeId);
+        Employee cursor = candidateManager;
+        while (cursor != null) {
+            if (!visited.add(cursor.getId())) {
+                throw new BusinessException("Circular reporting hierarchy detected.");
+            }
+            cursor = cursor.getReportsTo();
+        }
     }
 
     private Map<String, Object> toAuditSnapshot(Employee emp) {
