@@ -97,7 +97,7 @@ public class AttendanceController {
                           HttpServletRequest request,
                           RedirectAttributes redirectAttributes) {
         try {
-            String clientIp = extractClientIp(request);
+            String clientIp = com.hrms.audit.AuditAspect.extractClientIp(request);
             attendanceService.clockIn(userDetails.getUserId(), workMode, clientIp, notes);
             redirectAttributes.addFlashAttribute("successMessage", "Clocked in successfully! Have a productive day.");
         } catch (BusinessException ex) {
@@ -117,7 +117,7 @@ public class AttendanceController {
                            HttpServletRequest request,
                            RedirectAttributes redirectAttributes) {
         try {
-            String clientIp = extractClientIp(request);
+            String clientIp = com.hrms.audit.AuditAspect.extractClientIp(request);
             attendanceService.clockOut(userDetails.getUserId(), clientIp, notes);
             redirectAttributes.addFlashAttribute("successMessage", "Clocked out successfully! Total work duration recorded.");
         } catch (BusinessException ex) {
@@ -170,18 +170,15 @@ public class AttendanceController {
             attendanceService.correctAttendance(dto, userDetails.getUserId());
             redirectAttributes.addFlashAttribute("successMessage",
                     "Attendance record corrected successfully and logged to the audit trail.");
-        } catch (Exception ex) {
+        } catch (BusinessException | com.hrms.exception.ResourceNotFoundException ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "Correction failed: " + ex.getMessage());
+        } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(AttendanceController.class)
+                    .error("Unexpected error correcting attendance for employeeId={}", dto.getEmployeeId(), ex);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Correction failed due to an unexpected error.");
         }
 
         return "redirect:/attendance/manage?date=" + dto.getWorkDate();
-    }
-
-    private String extractClientIp(HttpServletRequest request) {
-        String xf = request.getHeader("X-Forwarded-For");
-        if (xf != null && !xf.isBlank()) {
-            return xf.split(",")[0].trim();
-        }
-        return request.getRemoteAddr() != null ? request.getRemoteAddr() : "127.0.0.1";
     }
 }

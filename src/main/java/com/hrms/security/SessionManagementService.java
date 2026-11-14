@@ -15,12 +15,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -40,15 +44,18 @@ public class SessionManagementService {
     private final UserRepository userRepository;
     private final JdbcTemplate jdbcTemplate;
     private final Clock clock;
+    private final Duration idleTimeout;
 
     public SessionManagementService(UserSessionRepository userSessionRepository,
                                     UserRepository userRepository,
                                     JdbcTemplate jdbcTemplate,
-                                    Clock clock) {
+                                    Clock clock,
+                                    @Value("${spring.session.timeout:30m}") Duration idleTimeout) {
         this.userSessionRepository = userSessionRepository;
         this.userRepository = userRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.clock = clock;
+        this.idleTimeout = idleTimeout != null ? idleTimeout : Duration.ofMinutes(30);
     }
 
     @Transactional
@@ -95,6 +102,59 @@ public class SessionManagementService {
                 log.info("Session logged out: sessionId={}", sessionId);
             }
         });
+    }
+
+    @Transactional
+    public void recordExpiredSession(String sessionId) {
+        if (sessionId == null || sessionId.isBlank()) {
+            return;
+        }
+        userSessionRepository.findBySessionId(sessionId).ifPresent(userSession -> {
+            if (userSession.getLogoutAt() == null) {
+                userSession.setLogoutAt(Instant.now(clock));
+                userSession.setEndedReason(SessionEndedReason.EXPIRED);
+                userSessionRepository.save(userSession);
+                log.info("Session marked EXPIRED: sessionId={}", sessionId);
+            }
+        });
+    }
+
+    /**
+     * Periodically reconciles open user_sessions rows whose underlying SPRING_SESSION record
+     * has reached EXPIRY_TIME or was swept by Spring Session cleanup without firing a per-row event.
+     */
+    @Scheduled(fixedDelay = 300_000)
+    @Transactional
+    public int reconcileExpiredSessions() {
+        Instant now = Instant.now(clock);
+        long nowMillis = now.toEpochMilli();
+        Timestamp logoutTs = Timestamp.from(now);
+        Timestamp staleCutoff = Timestamp.from(now.minus(idleTimeout));
+
+        int updated = jdbcTemplate.update("""
+                UPDATE user_sessions us
+                SET logout_at = ?, ended_reason = 'EXPIRED'
+                WHERE us.logout_at IS NULL
+                  AND (
+                    EXISTS (
+                        SELECT 1 FROM SPRING_SESSION s
+                        WHERE s.SESSION_ID = us.session_id
+                          AND s.EXPIRY_TIME <= ?
+                    )
+                    OR (
+                        us.login_at <= ?
+                        AND NOT EXISTS (
+                            SELECT 1 FROM SPRING_SESSION s
+                            WHERE s.SESSION_ID = us.session_id
+                        )
+                    )
+                  )
+                """, logoutTs, nowMillis, staleCutoff);
+
+        if (updated > 0) {
+            log.info("Reconciled {} expired session(s) in user_sessions.", updated);
+        }
+        return updated;
     }
 
     @Transactional(readOnly = true)

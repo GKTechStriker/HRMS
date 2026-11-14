@@ -14,9 +14,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -74,6 +76,7 @@ public class DepartmentService {
         if (parentDepartmentId != null) {
             Department parent = departmentRepository.findById(parentDepartmentId)
                     .orElseThrow(() -> ResourceNotFoundException.forEntity("Department", parentDepartmentId.toString()));
+            validateNoParentCycle(null, parent);
             dept.setParentDepartment(parent);
         }
 
@@ -92,6 +95,75 @@ public class DepartmentService {
 
         AuditContext.setTarget(dept.getId(), null, newData);
         return dept;
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('HR_ADMIN')")
+    @Audited(action = "DEPARTMENT_UPDATED", targetType = "Department")
+    public Department updateDepartment(UUID departmentId, String name, UUID parentDepartmentId, UUID headEmployeeId) {
+        if (name == null || name.isBlank()) {
+            throw new BusinessException("Department name is required.");
+        }
+        Department dept = departmentRepository.findById(departmentId)
+                .orElseThrow(() -> ResourceNotFoundException.forEntity("Department", departmentId.toString()));
+
+        String trimmedName = name.trim();
+        departmentRepository.findByNameIgnoreCase(trimmedName).ifPresent(existing -> {
+            if (!existing.getId().equals(departmentId)) {
+                throw new BusinessException("Department already exists: " + trimmedName);
+            }
+        });
+
+        Map<String, Object> beforeData = new LinkedHashMap<>();
+        beforeData.put("name", dept.getName());
+        beforeData.put("parentDepartment", dept.getParentDepartment() != null ? dept.getParentDepartment().getName() : null);
+        beforeData.put("headEmployee", dept.getHeadEmployee() != null ? dept.getHeadEmployee().getEmployeeCode() : null);
+
+        dept.setName(trimmedName);
+
+        if (parentDepartmentId != null) {
+            Department parent = departmentRepository.findById(parentDepartmentId)
+                    .orElseThrow(() -> ResourceNotFoundException.forEntity("Department", parentDepartmentId.toString()));
+            validateNoParentCycle(departmentId, parent);
+            dept.setParentDepartment(parent);
+        } else {
+            dept.setParentDepartment(null);
+        }
+
+        if (headEmployeeId != null) {
+            Employee head = employeeRepository.findById(headEmployeeId)
+                    .orElseThrow(() -> ResourceNotFoundException.forEntity("Employee", headEmployeeId.toString()));
+            dept.setHeadEmployee(head);
+        } else {
+            dept.setHeadEmployee(null);
+        }
+
+        dept = departmentRepository.save(dept);
+
+        Map<String, Object> afterData = new LinkedHashMap<>();
+        afterData.put("name", dept.getName());
+        afterData.put("parentDepartment", dept.getParentDepartment() != null ? dept.getParentDepartment().getName() : null);
+        afterData.put("headEmployee", dept.getHeadEmployee() != null ? dept.getHeadEmployee().getEmployeeCode() : null);
+
+        AuditContext.setTarget(dept.getId(), beforeData, afterData);
+        return dept;
+    }
+
+    /**
+     * Prevents direct self-parenting and multi-hop circular department hierarchies (GAP-02).
+     */
+    public void validateNoParentCycle(UUID departmentId, Department candidateParent) {
+        Set<UUID> visited = new HashSet<>();
+        if (departmentId != null) {
+            visited.add(departmentId);
+        }
+        Department cursor = candidateParent;
+        while (cursor != null) {
+            if (!visited.add(cursor.getId())) {
+                throw new BusinessException("Circular department hierarchy detected.");
+            }
+            cursor = cursor.getParentDepartment();
+        }
     }
 
     @Transactional

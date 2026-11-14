@@ -82,8 +82,13 @@ class Part1ConfigAndTimeUnitTest {
 
         UUID deptId = UUID.randomUUID();
         UUID roleId = UUID.randomUUID();
-        when(deptRepo.findById(deptId)).thenReturn(Optional.of(new Department()));
-        when(roleRepo.findById(roleId)).thenReturn(Optional.of(new JobRole()));
+        Department dept = new Department();
+        dept.setId(deptId);
+        JobRole role = new JobRole();
+        role.setId(roleId);
+        role.setDepartment(dept);
+        when(deptRepo.findById(deptId)).thenReturn(Optional.of(dept));
+        when(roleRepo.findById(roleId)).thenReturn(Optional.of(role));
         when(userRepo.existsByEmailIgnoreCase("new@company.com")).thenReturn(false);
 
         EmployeeService service = new EmployeeService(

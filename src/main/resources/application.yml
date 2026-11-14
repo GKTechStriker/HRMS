@@ -57,6 +57,7 @@ spring:
 # Server Configuration
 server:
   port: ${PORT:8080}
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:none}
   servlet:
     context-path: /
     session:
@@ -73,6 +74,8 @@ hrms:
   timezone: ${HRMS_TIMEZONE:Asia/Kolkata}
   session:
     absolute-timeout-hours: ${HRMS_SESSION_ABSOLUTE_TIMEOUT_HOURS:8}
+  cors:
+    allowed-origins: ${HRMS_CORS_ALLOWED_ORIGINS:}
   seed:
     enabled: ${HRMS_SEED_ENABLED:true}
   demo-hints:
