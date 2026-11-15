@@ -153,6 +153,7 @@ public class EmployeeController {
         form.setDateOfBirth(emp.getDateOfBirth());
         form.setDateOfJoining(emp.getDateOfJoining());
         form.setStatus(emp.getStatus());
+        form.setProfilePhotoUrl(emp.getProfilePhotoUrl());
 
         model.addAttribute("employee", emp);
         model.addAttribute("employeeForm", form);

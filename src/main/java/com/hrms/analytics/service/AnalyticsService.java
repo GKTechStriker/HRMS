@@ -73,7 +73,7 @@ public class AnalyticsService {
             trendMap.put(d, new AttendanceTrendDto(d, 0, 0, 0, 0, 0, 0));
         }
 
-        List<Object[]> rows = attendanceRecordRepository.countAttendanceByDateAndStatus(startDate);
+        List<Object[]> rows = attendanceRecordRepository.countAttendanceByDateAndStatusBetween(startDate, endDate);
         for (Object[] row : rows) {
             LocalDate date = (LocalDate) row[0];
             AttendanceStatus status = (AttendanceStatus) row[1];

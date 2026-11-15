@@ -5,8 +5,9 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title th:text="${title} + ' · Enterprise HRMS'">Enterprise HRMS</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
 
@@ -91,6 +92,13 @@
                        th:classappend="${activeTab == 'sessions'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
                        class="px-3 py-2 rounded-md transition">
                         Sessions
+                    </a>
+
+                    <!-- Company Holidays visible to all authenticated users (GAP-09) -->
+                    <a th:href="@{/holidays}"
+                       th:classappend="${activeTab == 'holidays'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
+                       class="px-3 py-2 rounded-md transition">
+                        Holidays
                     </a>
                 </nav>
             </div>

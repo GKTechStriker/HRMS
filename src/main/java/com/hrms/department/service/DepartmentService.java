@@ -53,7 +53,13 @@ public class DepartmentService {
     public Map<UUID, Long> getDepartmentHeadcounts() {
         Map<UUID, Long> counts = new LinkedHashMap<>();
         for (Department dept : departmentRepository.findAll()) {
-            counts.put(dept.getId(), employeeRepository.countByDepartmentId(dept.getId()));
+            counts.put(dept.getId(), 0L);
+        }
+        List<Object[]> aggregated = employeeRepository.countHeadcountByDepartmentId();
+        for (Object[] row : aggregated) {
+            UUID deptId = (UUID) row[0];
+            long count = ((Number) row[1]).longValue();
+            counts.put(deptId, count);
         }
         return counts;
     }

@@ -17,7 +17,12 @@
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5">
             <div class="flex items-center space-x-4">
-                <div class="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl"
+                <img th:if="${employee.profilePhotoUrl != null and !employee.profilePhotoUrl.isBlank()}"
+                     th:src="${employee.profilePhotoUrl}"
+                     alt="Profile Photo"
+                     class="w-14 h-14 rounded-full object-cover border border-slate-200 shadow-sm"/>
+                <div th:unless="${employee.profilePhotoUrl != null and !employee.profilePhotoUrl.isBlank()}"
+                     class="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl"
                      th:text="${#strings.substring(employee.fullName, 0, 1)}">A</div>
                 <div>
                     <div class="flex items-center space-x-2.5">

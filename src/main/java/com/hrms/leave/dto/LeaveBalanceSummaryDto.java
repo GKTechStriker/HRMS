@@ -23,6 +23,7 @@ public class LeaveBalanceSummaryDto {
     private String leaveTypeCode;
     private String leaveTypeName;
     private boolean isPaid;
+    private boolean requiresAttachment;
     private BigDecimal allocatedDays;
     private BigDecimal usedDays;
     private BigDecimal pendingDays;

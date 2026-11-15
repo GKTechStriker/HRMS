@@ -1,6 +1,7 @@
 package com.hrms.security;
 
 import com.hrms.audit.AuditService;
+import com.hrms.audit.entity.AuditLog;
 import com.hrms.department.repository.DepartmentRepository;
 import com.hrms.employee.entity.EmployeeStatus;
 import com.hrms.employee.repository.EmployeeRepository;
@@ -16,6 +17,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -93,9 +100,34 @@ public class AuthAndShellController {
     @GetMapping("/audit")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')")
     public String auditLogPage(@AuthenticationPrincipal CustomUserDetails principal,
+                               @RequestParam(name = "action", required = false) String action,
+                               @RequestParam(name = "fromDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+                               @RequestParam(name = "toDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+                               @RequestParam(name = "page", defaultValue = "0") int page,
+                               @RequestParam(name = "size", defaultValue = "25") int size,
                                Model model) {
+        int boundedPage = Math.max(page, 0);
+        int boundedSize = Math.min(Math.max(size, 10), 100);
+        Pageable pageable = PageRequest.of(boundedPage, boundedSize);
+        Page<AuditLog> auditPage = auditService.searchAuditLogsPaged(principal, action, fromDate, toDate, pageable);
+
+        long totalElements = auditPage.getTotalElements();
+        long showingFrom = totalElements > 0 ? ((long) boundedPage * boundedSize + 1) : 0L;
+        long showingTo = Math.min((long) (boundedPage + 1) * boundedSize, totalElements);
+
         model.addAttribute("principal", principal);
-        model.addAttribute("auditLogs", auditService.getRecentAuditLogsForPrincipal(principal, 50));
+        model.addAttribute("auditPage", auditPage);
+        model.addAttribute("auditLogs", auditPage.getContent());
+        model.addAttribute("currentPage", boundedPage);
+        model.addAttribute("pageSize", boundedSize);
+        model.addAttribute("totalPages", auditPage.getTotalPages());
+        model.addAttribute("totalElements", totalElements);
+        model.addAttribute("showingFrom", showingFrom);
+        model.addAttribute("showingTo", showingTo);
+        model.addAttribute("selectedAction", action);
+        model.addAttribute("fromDate", fromDate);
+        model.addAttribute("toDate", toDate);
+        model.addAttribute("availableActions", auditService.getDistinctActions());
         return "audit";
     }
 
