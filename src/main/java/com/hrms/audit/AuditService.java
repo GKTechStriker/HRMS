@@ -44,6 +44,33 @@ public class AuditService {
     }
 
     /**
+     * Search and paginate audit logs with optional action and date range filters (GAP-07).
+     * SUPER_ADMIN sees all records; HR_ADMIN sees only their own actions.
+     */
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')")
+    public org.springframework.data.domain.Page<AuditLog> searchAuditLogsPaged(
+            CustomUserDetails principal,
+            String action,
+            java.time.LocalDate fromDate,
+            java.time.LocalDate toDate,
+            org.springframework.data.domain.Pageable pageable) {
+        Instant fromInstant = fromDate != null ? fromDate.atStartOfDay(clock.getZone()).toInstant() : null;
+        Instant toInstant = toDate != null ? toDate.plusDays(1).atStartOfDay(clock.getZone()).toInstant().minusNanos(1) : null;
+        UUID scopedUserId = (principal != null && principal.getRole() == Role.SUPER_ADMIN) ? null :
+                (principal != null ? principal.getUserId() : null);
+        String filterAction = (action != null && !action.isBlank()) ? action.trim() : null;
+
+        return auditLogRepository.searchAuditLogs(filterAction, fromInstant, toInstant, scopedUserId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')")
+    public List<String> getDistinctActions() {
+        return auditLogRepository.findDistinctActions();
+    }
+
+    /**
      * Week 2 Gate Verification Method (Enactment Plan Page 3):
      * "Verify audit table writes actor/session/IP/timestamp on a dummy method"
      */

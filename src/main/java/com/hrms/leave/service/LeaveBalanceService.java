@@ -44,30 +44,32 @@ public class LeaveBalanceService {
     @Transactional
     public List<LeaveBalance> initializeBalancesForEmployee(Employee employee, int year) {
         List<LeaveType> leaveTypes = leaveTypeRepository.findAll();
+        List<LeaveBalance> existing = leaveBalanceRepository.findByEmployeeIdAndYearWithLeaveType(employee.getId(), year);
+        java.util.Set<UUID> existingTypeIds = existing.stream()
+                .map(b -> b.getLeaveType().getId())
+                .collect(java.util.stream.Collectors.toSet());
+
         List<LeaveBalance> created = new ArrayList<>();
-
         for (LeaveType type : leaveTypes) {
-            boolean exists = leaveBalanceRepository
-                    .findByEmployeeIdAndLeaveTypeIdAndYear(employee.getId(), type.getId(), year)
-                    .isPresent();
-
-            if (!exists) {
+            if (!existingTypeIds.contains(type.getId())) {
                 LeaveBalance balance = new LeaveBalance(
                         employee,
                         type,
                         year,
                         type.getDefaultDaysPerYear() != null ? type.getDefaultDaysPerYear() : BigDecimal.ZERO
                 );
-                created.add(leaveBalanceRepository.save(balance));
+                created.add(balance);
             }
         }
 
         if (!created.isEmpty()) {
+            leaveBalanceRepository.saveAll(created);
             log.info("Initialized {} leave balance categories for employee {} ({}) for year {}",
                     created.size(), employee.getFullName(), employee.getEmployeeCode(), year);
+            return leaveBalanceRepository.findByEmployeeIdAndYearWithLeaveType(employee.getId(), year);
         }
 
-        return leaveBalanceRepository.findByEmployeeIdAndYearWithLeaveType(employee.getId(), year);
+        return existing;
     }
 
     /**
@@ -90,6 +92,7 @@ public class LeaveBalanceService {
                         .leaveTypeCode(b.getLeaveType().getCode())
                         .leaveTypeName(b.getLeaveType().getName())
                         .isPaid(b.getLeaveType().isPaid())
+                        .requiresAttachment(b.getLeaveType().isRequiresAttachment())
                         .allocatedDays(b.getAllocatedDays())
                         .usedDays(b.getUsedDays())
                         .pendingDays(b.getPendingDays())

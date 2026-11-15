@@ -15,11 +15,45 @@
                 </p>
             </div>
             <div>
-                <a th:href="@{/reports/audit/csv}"
+                <a th:href="@{/reports/audit/csv(action=${selectedAction}, fromDate=${fromDate}, toDate=${toDate})}"
                    class="inline-flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition">
                     Export Audit CSV
                 </a>
             </div>
+        </div>
+
+        <!-- Filter Toolbar (GAP-07) -->
+        <div class="px-6 py-4 bg-slate-50/70 border-b border-slate-200">
+            <form th:action="@{/audit}" method="get" class="flex flex-wrap items-end gap-3 text-xs">
+                <div>
+                    <label class="block font-semibold uppercase text-slate-500 mb-1">Action</label>
+                    <select name="action" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <option value="">— All Actions —</option>
+                        <option th:each="act : ${availableActions}" th:value="${act}" th:text="${act}"
+                                th:selected="${act == selectedAction}">ACTION</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold uppercase text-slate-500 mb-1">From Date</label>
+                    <input type="date" name="fromDate" th:value="${fromDate}"
+                           class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"/>
+                </div>
+                <div>
+                    <label class="block font-semibold uppercase text-slate-500 mb-1">To Date</label>
+                    <input type="date" name="toDate" th:value="${toDate}"
+                           class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"/>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button type="submit"
+                            class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition">
+                        Filter
+                    </button>
+                    <a th:href="@{/audit}"
+                       class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-600 font-semibold rounded-lg border border-slate-300 transition">
+                        Reset
+                    </a>
+                </div>
+            </form>
         </div>
 
         <div class="overflow-x-auto">
@@ -38,7 +72,7 @@
                 <tbody class="divide-y divide-slate-100">
                 <tr th:if="${#lists.isEmpty(auditLogs)}">
                     <td colspan="7" class="px-4 py-8 text-center text-slate-400 text-xs">
-                        No audit entries found.
+                        No audit entries found matching the criteria.
                     </td>
                 </tr>
                 <tr th:each="entry : ${auditLogs}" class="hover:bg-slate-50 align-top">
@@ -69,6 +103,40 @@
                 </tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Pagination Controls (GAP-07) -->
+        <div th:if="${totalPages > 0}"
+             class="px-6 py-3.5 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500 bg-slate-50/50">
+            <div>
+                Showing <strong class="text-slate-800" th:text="${showingFrom}">1</strong>
+                to <strong class="text-slate-800" th:text="${showingTo}">25</strong>
+                of <strong class="text-slate-800" th:text="${totalElements}">100</strong> entries
+            </div>
+            <div class="flex items-center space-x-2">
+                <a th:if="${currentPage > 0}"
+                   th:href="@{/audit(page=${currentPage - 1}, size=${pageSize}, action=${selectedAction}, fromDate=${fromDate}, toDate=${toDate})}"
+                   class="px-3 py-1.5 rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 font-medium transition">
+                    &larr; Previous
+                </a>
+                <span th:if="${currentPage == 0}"
+                      class="px-3 py-1.5 rounded-md border border-slate-200 bg-slate-100 text-slate-400 font-medium cursor-not-allowed">
+                    &larr; Previous
+                </span>
+
+                <span class="px-2 font-mono text-slate-600"
+                      th:text="'Page ' + (${currentPage + 1}) + ' of ' + ${totalPages}">Page 1 of 1</span>
+
+                <a th:if="${currentPage + 1 < totalPages}"
+                   th:href="@{/audit(page=${currentPage + 1}, size=${pageSize}, action=${selectedAction}, fromDate=${fromDate}, toDate=${toDate})}"
+                   class="px-3 py-1.5 rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 font-medium transition">
+                    Next &rarr;
+                </a>
+                <span th:if="${currentPage + 1 >= totalPages}"
+                      class="px-3 py-1.5 rounded-md border border-slate-200 bg-slate-100 text-slate-400 font-medium cursor-not-allowed">
+                    Next &rarr;
+                </span>
+            </div>
         </div>
     </div>
 </main>

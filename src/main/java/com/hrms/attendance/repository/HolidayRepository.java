@@ -21,6 +21,8 @@ public interface HolidayRepository extends JpaRepository<Holiday, UUID> {
 
     List<Holiday> findByRecurringTrue();
 
+    List<Holiday> findAllByOrderByHolidayDateAsc();
+
     default boolean isPublicHoliday(LocalDate date) {
         if (existsByHolidayDate(date)) {
             return true;

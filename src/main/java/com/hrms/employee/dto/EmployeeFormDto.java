@@ -44,6 +44,16 @@ public class EmployeeFormDto {
 
     private EmployeeStatus status = EmployeeStatus.ACTIVE;
 
+    private String profilePhotoUrl;
+
+    public String getProfilePhotoUrl() {
+        return profilePhotoUrl;
+    }
+
+    public void setProfilePhotoUrl(String profilePhotoUrl) {
+        this.profilePhotoUrl = profilePhotoUrl;
+    }
+
     public String getFullName() {
         return fullName;
     }

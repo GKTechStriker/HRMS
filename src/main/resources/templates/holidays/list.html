@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Company Holidays')}"></head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+<header th:replace="~{fragments/layout :: navbar('holidays')}"></header>
+
+<main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <!-- Flash Messages -->
+    <div th:if="${successMessage}" class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 font-medium"
+         th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800 font-medium"
+         th:text="${errorMessage}"></div>
+
+    <!-- Header Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900">Company Holidays & Observances</h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Official calendar holidays are excluded from leave quota deductions and mark roster attendance as <span class="font-semibold text-slate-700">HOLIDAY</span>.
+            </p>
+        </div>
+        <div sec:authorize="hasRole('HR_ADMIN')">
+            <button type="button" onclick="openHolidayModal()"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                + Add Company Holiday
+            </button>
+        </div>
+    </div>
+
+    <!-- Holidays Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold">
+                <tr>
+                    <th class="px-5 py-3 text-left">Date</th>
+                    <th class="px-5 py-3 text-left">Holiday Name</th>
+                    <th class="px-5 py-3 text-left">Recurrence</th>
+                    <th class="px-5 py-3 text-left">Status</th>
+                    <th class="px-5 py-3 text-left">Description</th>
+                    <th sec:authorize="hasRole('HR_ADMIN')" class="px-5 py-3 text-right">Actions</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                <tr th:if="${#lists.isEmpty(holidays)}">
+                    <td colspan="6" class="px-5 py-8 text-center text-slate-400 text-xs">
+                        No company holidays configured yet.
+                    </td>
+                </tr>
+                <tr th:each="h : ${holidays}" class="hover:bg-slate-50">
+                    <td class="px-5 py-3 font-mono text-xs text-slate-700 font-medium">
+                        <div th:text="${#temporals.format(h.holidayDate, 'dd MMM yyyy')}">01 Jan 2026</div>
+                        <div class="text-[11px] text-slate-400" th:text="${#temporals.format(h.holidayDate, 'EEEE')}">Thursday</div>
+                    </td>
+                    <td class="px-5 py-3 font-semibold text-slate-800" th:text="${h.name}">New Year's Day</td>
+                    <td class="px-5 py-3 text-xs">
+                        <span th:if="${h.recurring}"
+                              class="px-2 py-0.5 font-medium rounded bg-purple-50 text-purple-700 border border-purple-200">
+                            Annual (Recurring)
+                        </span>
+                        <span th:unless="${h.recurring}"
+                              class="px-2 py-0.5 font-medium rounded bg-slate-100 text-slate-600">
+                            Single Date
+                        </span>
+                    </td>
+                    <td class="px-5 py-3 text-xs">
+                        <span th:if="${h.holidayDate.isEqual(today)}"
+                              class="px-2 py-0.5 font-semibold rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Today
+                        </span>
+                        <span th:if="${h.holidayDate.isAfter(today)}"
+                              class="px-2 py-0.5 font-medium rounded bg-blue-50 text-blue-700 border border-blue-200">
+                            Upcoming
+                        </span>
+                        <span th:if="${h.holidayDate.isBefore(today)}"
+                              class="px-2 py-0.5 font-medium rounded bg-slate-100 text-slate-400">
+                            Past
+                        </span>
+                    </td>
+                    <td class="px-5 py-3 text-xs text-slate-500" th:text="${h.description != null ? h.description : '—'}">—</td>
+                    <td sec:authorize="hasRole('HR_ADMIN')" class="px-5 py-3 text-right">
+                        <form th:action="@{/holidays/{id}/delete(id=${h.id})}" method="post"
+                              onsubmit="return confirm('Are you sure you want to delete this holiday?');" class="inline">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit"
+                                    class="text-xs text-red-600 hover:text-red-800 font-medium">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add Holiday Modal (HR Admin only) -->
+    <div id="holidayModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-200">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <h3 class="text-base font-bold text-slate-800">Add Company Holiday</h3>
+                <button type="button" onclick="closeHolidayModal()" class="text-slate-400 hover:text-slate-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <form th:action="@{/holidays/new}" method="post" class="space-y-4">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Holiday Name *</label>
+                    <input type="text" name="name" required placeholder="e.g. Republic Day"
+                           class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"/>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Holiday Date *</label>
+                    <input type="date" name="holidayDate" required
+                           class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"/>
+                </div>
+
+                <div class="flex items-center space-x-2 pt-1">
+                    <input type="checkbox" name="recurring" id="recurring" value="true"
+                           class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-600"/>
+                    <label for="recurring" class="text-xs text-slate-700 font-medium select-none">
+                        Recurring every year (matches same month and day)
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Description (Optional)</label>
+                    <textarea name="description" rows="2" placeholder="Optional notes regarding observance..."
+                              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeHolidayModal()"
+                            class="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+                        Register Holiday
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+
+<script>
+    function openHolidayModal() {
+        document.getElementById('holidayModal').classList.remove('hidden');
+    }
+    function closeHolidayModal() {
+        document.getElementById('holidayModal').classList.add('hidden');
+    }
+</script>
+</body>
+</html>

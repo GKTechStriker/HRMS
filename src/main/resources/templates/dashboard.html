@@ -129,14 +129,27 @@
     <div sec:authorize="hasRole('EMPLOYEE') and !hasRole('HR_ADMIN')" th:if="${myEmployeeProfile != null}"
          class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
         <h2 class="text-base font-bold text-slate-900 mb-4">My Employee Profile</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+        <div class="flex items-center space-x-4 mb-4">
+            <img th:if="${myEmployeeProfile.profilePhotoUrl != null and !myEmployeeProfile.profilePhotoUrl.isBlank()}"
+                 th:src="${myEmployeeProfile.profilePhotoUrl}"
+                 alt="Profile Photo"
+                 class="w-12 h-12 rounded-full object-cover border border-slate-200 shadow-sm"/>
+            <div th:unless="${myEmployeeProfile.profilePhotoUrl != null and !myEmployeeProfile.profilePhotoUrl.isBlank()}"
+                 class="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg"
+                 th:text="${#strings.substring(myEmployeeProfile.fullName, 0, 1)}">A</div>
+            <div>
+                <p class="font-bold text-slate-900 text-base" th:text="${myEmployeeProfile.fullName}">Full Name</p>
+                <p class="text-xs text-slate-500" th:text="${myEmployeeProfile.jobRole != null ? myEmployeeProfile.jobRole.title : 'Employee'}">Role</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm border-t border-slate-100 pt-3">
             <div>
                 <span class="text-xs text-slate-500 block">Employee Code</span>
                 <span class="font-mono font-semibold text-slate-800" th:text="${myEmployeeProfile.employeeCode}">EMP-002</span>
             </div>
             <div>
-                <span class="text-xs text-slate-500 block">Full Name</span>
-                <span class="font-semibold text-slate-800" th:text="${myEmployeeProfile.fullName}">Aarav Mehta</span>
+                <span class="text-xs text-slate-500 block">Department</span>
+                <span class="font-semibold text-slate-800" th:text="${myEmployeeProfile.department != null ? myEmployeeProfile.department.name : '—'}">Dept</span>
             </div>
             <div>
                 <span class="text-xs text-slate-500 block">Status</span>
@@ -147,13 +160,13 @@
     </div>
 
     <!-- Analytics & Visual Trends (Visible to SUPER_ADMIN & HR_ADMIN) -->
-    <div sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Department Distribution Doughnut Chart -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h2 class="text-base font-bold text-slate-900">Department Distribution</h2>
-                    <p class="text-xs text-slate-500">Active employee headcount by department</p>
+                    <h2 class="text-base font-bold text-slate-900">Department Headcount</h2>
+                    <p class="text-xs text-slate-500">Active employee headcount</p>
                 </div>
                 <span class="px-2.5 py-1 text-[11px] font-semibold rounded bg-blue-50 text-blue-700 border border-blue-200">Live Metric</span>
             </div>
@@ -166,13 +179,27 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h2 class="text-base font-bold text-slate-900">Attendance Trends (Last 14 Days)</h2>
-                    <p class="text-xs text-slate-500">Daily breakdown: Present, Late, Leave & Absent</p>
+                    <h2 class="text-base font-bold text-slate-900">Attendance Trends</h2>
+                    <p class="text-xs text-slate-500">Daily breakdown: Present, Late, Leave, Absent</p>
                 </div>
                 <span class="px-2.5 py-1 text-[11px] font-semibold rounded bg-indigo-50 text-indigo-700 border border-indigo-200">14-Day Rolling</span>
             </div>
             <div class="relative flex-1 min-h-[260px]">
                 <canvas id="attendanceTrendsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Leave Consumption by Category Doughnut Chart (GAP-08) -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Leave Consumption</h2>
+                    <p class="text-xs text-slate-500">Approved days taken by category</p>
+                </div>
+                <span class="px-2.5 py-1 text-[11px] font-semibold rounded bg-amber-50 text-amber-700 border border-amber-200">YTD Aggregate</span>
+            </div>
+            <div class="relative flex-1 min-h-[260px] flex items-center justify-center">
+                <canvas id="leaveUsageChart"></canvas>
             </div>
         </div>
     </div>
@@ -346,6 +373,56 @@
                 });
             })
             .catch(function(err) { console.error('Failed to load attendance trends:', err); });
+
+        // Fetch Leave Consumption Chart (GAP-08)
+        fetch('/api/analytics/leave-usage')
+            .then(function(res) {
+                if (!res.ok) throw new Error('Status ' + res.status);
+                return res.json();
+            })
+            .then(function(data) {
+                var canvas = document.getElementById('leaveUsageChart');
+                if (!canvas) return;
+                if (!data || data.length === 0) {
+                    canvas.parentElement.innerHTML = '<p class="text-xs text-slate-400 text-center py-12">No leave consumption recorded yet.</p>';
+                    return;
+                }
+                var labels = data.map(function(d) { return d.leaveType; });
+                var days = data.map(function(d) { return d.daysTaken; });
+                var palette = [
+                    '#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'
+                ];
+                new Chart(canvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: days,
+                            backgroundColor: palette.slice(0, labels.length),
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { boxWidth: 12, font: { size: 11 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ' ' + context.label + ': ' + context.parsed + ' days';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(function(err) { console.error('Failed to load leave usage analytics:', err); });
     });
 </script>
 </body>

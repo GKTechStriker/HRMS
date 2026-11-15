@@ -17,6 +17,8 @@ import com.hrms.security.SessionManagementService;
 import com.hrms.security.entity.Role;
 import com.hrms.security.entity.User;
 import com.hrms.security.repository.UserRepository;
+import com.hrms.leave.service.LeaveBalanceService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +31,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -52,7 +56,10 @@ public class EmployeeService {
     private final JdbcTemplate jdbcTemplate;
     private final SessionManagementService sessionManagementService;
     private final String defaultInitialPassword;
+    private final LeaveBalanceService leaveBalanceService;
+    private final Clock clock;
 
+    @Autowired
     public EmployeeService(EmployeeRepository employeeRepository,
                            DepartmentRepository departmentRepository,
                            JobRoleRepository jobRoleRepository,
@@ -60,7 +67,9 @@ public class EmployeeService {
                            PasswordEncoder passwordEncoder,
                            JdbcTemplate jdbcTemplate,
                            SessionManagementService sessionManagementService,
-                           @Value("${hrms.security.default-initial-password:}") String defaultInitialPassword) {
+                           @Value("${hrms.security.default-initial-password:}") String defaultInitialPassword,
+                           @Autowired(required = false) LeaveBalanceService leaveBalanceService,
+                           @Autowired(required = false) Clock clock) {
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
         this.jobRoleRepository = jobRoleRepository;
@@ -69,6 +78,20 @@ public class EmployeeService {
         this.jdbcTemplate = jdbcTemplate;
         this.sessionManagementService = sessionManagementService;
         this.defaultInitialPassword = defaultInitialPassword;
+        this.leaveBalanceService = leaveBalanceService;
+        this.clock = clock != null ? clock : Clock.systemDefaultZone();
+    }
+
+    public EmployeeService(EmployeeRepository employeeRepository,
+                           DepartmentRepository departmentRepository,
+                           JobRoleRepository jobRoleRepository,
+                           UserRepository userRepository,
+                           PasswordEncoder passwordEncoder,
+                           JdbcTemplate jdbcTemplate,
+                           SessionManagementService sessionManagementService,
+                           String defaultInitialPassword) {
+        this(employeeRepository, departmentRepository, jobRoleRepository, userRepository,
+             passwordEncoder, jdbcTemplate, sessionManagementService, defaultInitialPassword, null, Clock.systemDefaultZone());
     }
 
     /**
@@ -176,6 +199,7 @@ public class EmployeeService {
         emp.setDateOfBirth(dto.getDateOfBirth());
         emp.setDateOfJoining(dto.getDateOfJoining());
         emp.setStatus(dto.getStatus() != null ? dto.getStatus() : EmployeeStatus.ACTIVE);
+        emp.setProfilePhotoUrl(dto.getProfilePhotoUrl() != null && !dto.getProfilePhotoUrl().isBlank() ? dto.getProfilePhotoUrl().trim() : null);
 
         if (dto.getReportsToId() != null) {
             Employee manager = employeeRepository.findById(dto.getReportsToId())
@@ -184,6 +208,11 @@ public class EmployeeService {
         }
 
         emp = employeeRepository.save(emp);
+
+        if (leaveBalanceService != null) {
+            int joiningYear = emp.getDateOfJoining() != null ? emp.getDateOfJoining().getYear() : LocalDate.now(clock).getYear();
+            leaveBalanceService.initializeBalancesForEmployee(emp, joiningYear);
+        }
 
         AuditContext.setTarget(emp.getId(), null, toAuditSnapshot(emp));
         return emp;
@@ -214,6 +243,7 @@ public class EmployeeService {
         if (dto.getStatus() != null) {
             emp.setStatus(dto.getStatus());
         }
+        emp.setProfilePhotoUrl(dto.getProfilePhotoUrl() != null && !dto.getProfilePhotoUrl().isBlank() ? dto.getProfilePhotoUrl().trim() : null);
 
         if (dto.getReportsToId() != null) {
             if (dto.getReportsToId().equals(emp.getId())) {
@@ -314,6 +344,7 @@ public class EmployeeService {
         map.put("dateOfBirth", emp.getDateOfBirth() != null ? emp.getDateOfBirth().toString() : null);
         map.put("dateOfJoining", emp.getDateOfJoining() != null ? emp.getDateOfJoining().toString() : null);
         map.put("status", emp.getStatus().name());
+        map.put("profilePhotoUrl", emp.getProfilePhotoUrl());
         return map;
     }
 }

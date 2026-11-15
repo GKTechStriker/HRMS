@@ -7,9 +7,16 @@ import com.hrms.audit.entity.AuditLog;
 import com.hrms.employee.entity.Employee;
 import com.hrms.employee.repository.EmployeeRepository;
 import com.hrms.security.CustomUserDetails;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -40,41 +47,56 @@ public class ExportService {
      * Export all active and archived employees as CSV.
      */
     public byte[] generateEmployeesCsv() {
-        List<Employee> employees = employeeRepository.findAllWithDepartmentAndJobRole();
-        StringBuilder sb = new StringBuilder();
-        sb.append("Employee Code,Full Name,Email,Phone,Department,Job Role,Status,Date of Joining\n");
-
-        for (Employee emp : employees) {
-            sb.append(escape(emp.getEmployeeCode())).append(",")
-              .append(escape(emp.getFullName())).append(",")
-              .append(escape(emp.getUser() != null ? emp.getUser().getEmail() : "")).append(",")
-              .append(escape(emp.getPhone())).append(",")
-              .append(escape(emp.getDepartment() != null ? emp.getDepartment().getName() : "")).append(",")
-              .append(escape(emp.getJobRole() != null ? emp.getJobRole().getTitle() : "")).append(",")
-              .append(escape(emp.getStatus() != null ? emp.getStatus().name() : "")).append(",")
-              .append(escape(emp.getDateOfJoining() != null ? emp.getDateOfJoining().toString() : ""))
-              .append("\n");
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            writeEmployeesCsv(baos);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to generate employees CSV", e);
         }
+        return baos.toByteArray();
+    }
 
-        return sb.toString().getBytes(StandardCharsets.UTF_8);
+    public void writeEmployeesCsv(OutputStream outputStream) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+        writer.write("Employee Code,Full Name,Email,Phone,Department,Job Role,Status,Date of Joining\n");
+        List<Employee> employees = employeeRepository.findAllWithDepartmentAndJobRole();
+        for (Employee emp : employees) {
+            writer.write(escape(emp.getEmployeeCode()) + ","
+                    + escape(emp.getFullName()) + ","
+                    + escape(emp.getUser() != null ? emp.getUser().getEmail() : "") + ","
+                    + escape(emp.getPhone()) + ","
+                    + escape(emp.getDepartment() != null ? emp.getDepartment().getName() : "") + ","
+                    + escape(emp.getJobRole() != null ? emp.getJobRole().getTitle() : "") + ","
+                    + escape(emp.getStatus() != null ? emp.getStatus().name() : "") + ","
+                    + escape(emp.getDateOfJoining() != null ? emp.getDateOfJoining().toString() : "")
+                    + "\n");
+        }
+        writer.flush();
     }
 
     /**
      * Export attendance roster for the specified date and optional department filter.
      */
     public byte[] generateAttendanceCsv(LocalDate date, UUID departmentId) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            writeAttendanceCsv(date, departmentId, baos);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to generate attendance CSV", e);
+        }
+        return baos.toByteArray();
+    }
+
+    public void writeAttendanceCsv(LocalDate date, UUID departmentId, OutputStream outputStream) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+        writer.write("Date,Employee Code,Employee Name,Department,Work Mode,Clock In,Clock Out,Duration (Minutes),Status,Notes / Correction Reason\n");
         List<AttendanceRecord> records;
         if (departmentId != null) {
             records = attendanceRecordRepository.findByWorkDateAndDepartmentWithEmployee(date, departmentId);
         } else {
             records = attendanceRecordRepository.findByWorkDateWithEmployee(date);
         }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("Date,Employee Code,Employee Name,Department,Work Mode,Clock In,Clock Out,Duration (Minutes),Status,Notes / Correction Reason\n");
-
         DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("HH:mm");
-
         for (AttendanceRecord rec : records) {
             String clockInStr = rec.getClockIn() != null ? rec.getClockIn().format(timeFmt) : "";
             String clockOutStr = rec.getClockOut() != null ? rec.getClockOut().format(timeFmt) : "";
@@ -82,43 +104,59 @@ public class ExportService {
             String reason = rec.getCorrectionReason() != null ? rec.getCorrectionReason() :
                     (rec.getNotes() != null ? rec.getNotes() : "");
 
-            sb.append(escape(rec.getWorkDate().toString())).append(",")
-              .append(escape(rec.getEmployee().getEmployeeCode())).append(",")
-              .append(escape(rec.getEmployee().getFullName())).append(",")
-              .append(escape(rec.getEmployee().getDepartment() != null ? rec.getEmployee().getDepartment().getName() : "")).append(",")
-              .append(escape(rec.getWorkMode() != null ? rec.getWorkMode().name() : "")).append(",")
-              .append(escape(clockInStr)).append(",")
-              .append(escape(clockOutStr)).append(",")
-              .append(escape(durationStr)).append(",")
-              .append(escape(rec.getStatus() != null ? rec.getStatus().name() : "")).append(",")
-              .append(escape(reason))
-              .append("\n");
+            writer.write(escape(rec.getWorkDate().toString()) + ","
+                    + escape(rec.getEmployee().getEmployeeCode()) + ","
+                    + escape(rec.getEmployee().getFullName()) + ","
+                    + escape(rec.getEmployee().getDepartment() != null ? rec.getEmployee().getDepartment().getName() : "") + ","
+                    + escape(rec.getWorkMode() != null ? rec.getWorkMode().name() : "") + ","
+                    + escape(clockInStr) + ","
+                    + escape(clockOutStr) + ","
+                    + escape(durationStr) + ","
+                    + escape(rec.getStatus() != null ? rec.getStatus().name() : "") + ","
+                    + escape(reason)
+                    + "\n");
         }
-
-        return sb.toString().getBytes(StandardCharsets.UTF_8);
+        writer.flush();
     }
 
     /**
      * Export immutable audit logs as CSV scoped to the caller's authorization level.
      */
     public byte[] generateAuditCsv(CustomUserDetails principal) {
-        List<AuditLog> logs = auditService.getRecentAuditLogsForPrincipal(principal, 5000);
-        StringBuilder sb = new StringBuilder();
-        sb.append("Timestamp,Actor,HR Code,Action,Target Type,Target ID,Session ID,IP Address\n");
-
-        for (AuditLog log : logs) {
-            sb.append(escape(log.getOccurredAt() != null ? log.getOccurredAt().toString() : "")).append(",")
-              .append(escape(log.getUser() != null ? log.getUser().getEmail() : "")).append(",")
-              .append(escape(log.getHrCode() != null ? log.getHrCode() : "")).append(",")
-              .append(escape(log.getAction())).append(",")
-              .append(escape(log.getTargetType())).append(",")
-              .append(escape(log.getTargetId() != null ? log.getTargetId().toString() : "")).append(",")
-              .append(escape(log.getSessionId() != null ? log.getSessionId() : "")).append(",")
-              .append(escape(log.getIpAddress() != null ? log.getIpAddress() : ""))
-              .append("\n");
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            writeAuditCsv(principal, null, null, null, baos);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to generate audit CSV", e);
         }
+        return baos.toByteArray();
+    }
 
-        return sb.toString().getBytes(StandardCharsets.UTF_8);
+    /**
+     * Stream immutable audit logs as CSV chunk by chunk with optional filters and no truncation limit (GAP-07).
+     */
+    public void writeAuditCsv(CustomUserDetails principal, String action, LocalDate fromDate, LocalDate toDate, OutputStream outputStream) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+        writer.write("Timestamp,Actor,HR Code,Action,Target Type,Target ID,Session ID,IP Address\n");
+        int page = 0;
+        int pageSize = 500;
+        Page<AuditLog> slice;
+        do {
+            slice = auditService.searchAuditLogsPaged(principal, action, fromDate, toDate, PageRequest.of(page, pageSize));
+            for (AuditLog log : slice.getContent()) {
+                writer.write(escape(log.getOccurredAt() != null ? log.getOccurredAt().toString() : "") + ","
+                        + escape(log.getUser() != null ? log.getUser().getEmail() : "") + ","
+                        + escape(log.getHrCode() != null ? log.getHrCode() : "") + ","
+                        + escape(log.getAction()) + ","
+                        + escape(log.getTargetType()) + ","
+                        + escape(log.getTargetId() != null ? log.getTargetId().toString() : "") + ","
+                        + escape(log.getSessionId() != null ? log.getSessionId() : "") + ","
+                        + escape(log.getIpAddress() != null ? log.getIpAddress() : "")
+                        + "\n");
+            }
+            writer.flush();
+            page++;
+        } while (slice.hasNext());
     }
 
     /**

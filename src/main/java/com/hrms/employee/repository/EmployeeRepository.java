@@ -34,6 +34,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     long countByStatus(EmployeeStatus status);
     long countByDepartmentId(UUID departmentId);
 
+    @Query("SELECT e.department.id, COUNT(e) FROM Employee e WHERE e.department IS NOT NULL GROUP BY e.department.id")
+    List<Object[]> countHeadcountByDepartmentId();
+
     @Query("SELECT COALESCE(d.name, 'Unassigned'), COUNT(e) FROM Employee e LEFT JOIN e.department d WHERE e.status = :status GROUP BY d.name ORDER BY COUNT(e) DESC")
     List<Object[]> countHeadcountByDepartment(@Param("status") EmployeeStatus status);
 

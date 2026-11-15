@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -209,22 +210,26 @@ public class AttendanceService {
     @Transactional(readOnly = true)
     public DailyAttendanceSummaryDto getDailySummary(LocalDate date) {
         long activeEmployees = employeeRepository.countByStatus(EmployeeStatus.ACTIVE);
-        long present = attendanceRecordRepository.countByWorkDateAndStatus(date, AttendanceStatus.PRESENT);
-        long late = attendanceRecordRepository.countByWorkDateAndStatus(date, AttendanceStatus.LATE);
-        long halfDay = attendanceRecordRepository.countByWorkDateAndStatus(date, AttendanceStatus.HALF_DAY);
-        long absent = attendanceRecordRepository.countByWorkDateAndStatus(date, AttendanceStatus.ABSENT);
-        long onLeave = attendanceRecordRepository.countByWorkDateAndStatus(date, AttendanceStatus.ON_LEAVE);
-        long holiday = attendanceRecordRepository.countByWorkDateAndStatus(date, AttendanceStatus.HOLIDAY);
+        Map<AttendanceStatus, Long> statusCounts = new EnumMap<>(AttendanceStatus.class);
+        for (AttendanceStatus s : AttendanceStatus.values()) {
+            statusCounts.put(s, 0L);
+        }
+        List<Object[]> rows = attendanceRecordRepository.countAttendanceByStatusForDate(date);
+        for (Object[] row : rows) {
+            if (row[0] instanceof AttendanceStatus s && row[1] instanceof Number count) {
+                statusCounts.put(s, count.longValue());
+            }
+        }
 
         return DailyAttendanceSummaryDto.builder()
                 .date(date)
                 .totalActiveEmployees(activeEmployees)
-                .presentCount(present)
-                .lateCount(late)
-                .halfDayCount(halfDay)
-                .absentCount(absent)
-                .onLeaveCount(onLeave)
-                .holidayCount(holiday)
+                .presentCount(statusCounts.getOrDefault(AttendanceStatus.PRESENT, 0L))
+                .lateCount(statusCounts.getOrDefault(AttendanceStatus.LATE, 0L))
+                .halfDayCount(statusCounts.getOrDefault(AttendanceStatus.HALF_DAY, 0L))
+                .absentCount(statusCounts.getOrDefault(AttendanceStatus.ABSENT, 0L))
+                .onLeaveCount(statusCounts.getOrDefault(AttendanceStatus.ON_LEAVE, 0L))
+                .holidayCount(statusCounts.getOrDefault(AttendanceStatus.HOLIDAY, 0L))
                 .build();
     }
 
