@@ -1,0 +1,74 @@
+name: HRMS CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+    branches:
+      - develop
+      - main
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-verify:
+    name: Build, Test & Verify
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: hrms_springboot
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Eclipse Temurin JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Verify Environment
+        run: |
+          java -version
+          mvn -version
+
+      - name: Execute Full Test Suite
+        env:
+          DB_URL: jdbc:postgresql://localhost:5432/hrms_springboot
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+          HRMS_DEFAULT_USER_PASSWORD: CiTestPassword123!
+          HRMS_TIMEZONE: Asia/Kolkata
+          SPRING_PROFILES_ACTIVE: test
+        run: |
+          mvn clean test --batch-mode
+
+      - name: Build Application JAR Package
+        run: |
+          mvn package -DskipTests --batch-mode
+
+      - name: Archive Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          if-no-files-found: ignore

@@ -69,6 +69,18 @@ server:
     enabled: true
     min-response-size: 1024
 
+# Actuator Health & Probes
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+
 # HRMS Custom Security & Session Settings (Section 6.1)
 hrms:
   timezone: ${HRMS_TIMEZONE:Asia/Kolkata}

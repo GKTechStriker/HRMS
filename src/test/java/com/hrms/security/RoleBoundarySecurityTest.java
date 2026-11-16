@@ -1,36 +1,60 @@
 package com.hrms.security;
 
+import com.hrms.security.entity.SessionEndedReason;
+import com.hrms.security.entity.User;
+import com.hrms.security.entity.UserSession;
+import com.hrms.security.repository.UserRepository;
+import com.hrms.security.repository.UserSessionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.time.Instant;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Milestone 4 System Hardening & Role Boundary Verification Suite (Section 4 & Section 9.4).
+ * Milestone 4 & 5 System Hardening & Role Boundary Verification Suite (GAP-11).
  *
  * Verifies strict boundary separation:
- * 1. SUPER_ADMIN is strictly read-only on HR domain data (POST mutations receive 403 Forbidden).
- * 2. SUPER_ADMIN has oversight access (GET queries succeed).
+ * 1. SUPER_ADMIN (superadmin@company.com) is strictly read-only on HR domain data (POST mutations receive 403 Forbidden).
+ * 2. SUPER_ADMIN has oversight access across reports, analytics, directory, and audit (GET queries succeed).
  * 3. HR_ADMIN possesses operational read/write access.
- * 4. EMPLOYEE is strictly confined to self-service endpoints and forbidden from administrative queues and reports.
+ * 4. EMPLOYEE is strictly confined to self-service endpoints and forbidden from administrative queues, reports, and analytics.
+ * 5. CSRF tokens are strictly enforced on state-mutating requests.
+ * 6. IDOR protection prevents employees from revoking sessions belonging to other users.
  */
 @SpringBootTest
 class RoleBoundarySecurityTest {
 
     @Autowired
     private WebApplicationContext context;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private UserSessionRepository userSessionRepository;
+
+    @Autowired
+    private SessionManagementService sessionManagementService;
 
     private MockMvc mockMvc;
 
@@ -43,12 +67,12 @@ class RoleBoundarySecurityTest {
     }
 
     // =========================================================================
-    // 1. SUPER_ADMIN Zero-Write Constraint Enforcement
+    // 1. SUPER_ADMIN Zero-Write Constraint & Oversight Access (superadmin@company.com)
     // =========================================================================
 
     @Test
     @DisplayName("Super Admin receives 403 Forbidden on employee mutation POST /employees/new")
-    @WithMockUser(username = "admin@company.com", roles = {"SUPER_ADMIN"})
+    @WithMockUser(username = "superadmin@company.com", roles = {"SUPER_ADMIN"})
     void superAdminCannotMutateEmployees() throws Exception {
         mockMvc.perform(post("/employees/new").with(csrf()))
                 .andExpect(status().isForbidden());
@@ -56,7 +80,7 @@ class RoleBoundarySecurityTest {
 
     @Test
     @DisplayName("Super Admin receives 403 Forbidden on department mutation POST /departments/new")
-    @WithMockUser(username = "admin@company.com", roles = {"SUPER_ADMIN"})
+    @WithMockUser(username = "superadmin@company.com", roles = {"SUPER_ADMIN"})
     void superAdminCannotMutateDepartments() throws Exception {
         mockMvc.perform(post("/departments/new").with(csrf()))
                 .andExpect(status().isForbidden());
@@ -64,7 +88,7 @@ class RoleBoundarySecurityTest {
 
     @Test
     @DisplayName("Super Admin receives 403 Forbidden on manual attendance correction POST /attendance/correct")
-    @WithMockUser(username = "admin@company.com", roles = {"SUPER_ADMIN"})
+    @WithMockUser(username = "superadmin@company.com", roles = {"SUPER_ADMIN"})
     void superAdminCannotCorrectAttendance() throws Exception {
         mockMvc.perform(post("/attendance/correct").with(csrf()))
                 .andExpect(status().isForbidden());
@@ -72,7 +96,7 @@ class RoleBoundarySecurityTest {
 
     @Test
     @DisplayName("Super Admin receives 403 Forbidden on leave approval POST /leaves/{id}/approve")
-    @WithMockUser(username = "admin@company.com", roles = {"SUPER_ADMIN"})
+    @WithMockUser(username = "superadmin@company.com", roles = {"SUPER_ADMIN"})
     void superAdminCannotApproveLeaves() throws Exception {
         mockMvc.perform(post("/leaves/00000000-0000-0000-0000-000000000000/approve").with(csrf()))
                 .andExpect(status().isForbidden());
@@ -80,7 +104,7 @@ class RoleBoundarySecurityTest {
 
     @Test
     @DisplayName("Super Admin has read oversight on Employee Directory GET /employees")
-    @WithMockUser(username = "admin@company.com", roles = {"SUPER_ADMIN"})
+    @WithMockUser(username = "superadmin@company.com", roles = {"SUPER_ADMIN"})
     void superAdminCanReadEmployeeDirectory() throws Exception {
         mockMvc.perform(get("/employees"))
                 .andExpect(status().isOk());
@@ -88,7 +112,7 @@ class RoleBoundarySecurityTest {
 
     @Test
     @DisplayName("Super Admin has read oversight on Attendance Roster GET /attendance/manage")
-    @WithMockUser(username = "admin@company.com", roles = {"SUPER_ADMIN"})
+    @WithMockUser(username = "superadmin@company.com", roles = {"SUPER_ADMIN"})
     void superAdminCanReadAttendanceRoster() throws Exception {
         mockMvc.perform(get("/attendance/manage"))
                 .andExpect(status().isOk());
@@ -96,9 +120,33 @@ class RoleBoundarySecurityTest {
 
     @Test
     @DisplayName("Super Admin has read oversight on Leave Queue GET /leaves/manage")
-    @WithMockUser(username = "admin@company.com", roles = {"SUPER_ADMIN"})
+    @WithMockUser(username = "superadmin@company.com", roles = {"SUPER_ADMIN"})
     void superAdminCanReadLeaveQueue() throws Exception {
         mockMvc.perform(get("/leaves/manage"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Super Admin has read oversight on Audit Trail GET /audit")
+    @WithMockUser(username = "superadmin@company.com", roles = {"SUPER_ADMIN"})
+    void superAdminCanReadAuditTrail() throws Exception {
+        mockMvc.perform(get("/audit"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Super Admin has access to Analytics API GET /api/analytics/headcount-by-dept")
+    @WithMockUser(username = "superadmin@company.com", roles = {"SUPER_ADMIN"})
+    void superAdminCanAccessAnalyticsApi() throws Exception {
+        mockMvc.perform(get("/api/analytics/headcount-by-dept"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Super Admin has access to Report exports GET /reports/employees/csv")
+    @WithMockUser(username = "superadmin@company.com", roles = {"SUPER_ADMIN"})
+    void superAdminCanAccessReports() throws Exception {
+        mockMvc.perform(get("/reports/employees/csv"))
                 .andExpect(status().isOk());
     }
 
@@ -127,6 +175,14 @@ class RoleBoundarySecurityTest {
     @WithMockUser(username = "hr1@company.com", roles = {"HR_ADMIN"})
     void hrAdminCanAccessLeaveManage() throws Exception {
         mockMvc.perform(get("/leaves/manage"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("HR Admin can access Analytics API GET /api/analytics/leave-usage")
+    @WithMockUser(username = "hr1@company.com", roles = {"HR_ADMIN"})
+    void hrAdminCanAccessLeaveUsageAnalytics() throws Exception {
+        mockMvc.perform(get("/api/analytics/leave-usage"))
                 .andExpect(status().isOk());
     }
 
@@ -175,6 +231,22 @@ class RoleBoundarySecurityTest {
     }
 
     @Test
+    @DisplayName("Employee receives 403 Forbidden when downloading Attendance CSV GET /reports/attendance/csv")
+    @WithMockUser(username = "emp1@company.com", roles = {"EMPLOYEE"})
+    void employeeCannotDownloadAttendanceCsv() throws Exception {
+        mockMvc.perform(get("/reports/attendance/csv"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Employee receives 403 Forbidden when accessing Analytics API GET /api/analytics/headcount-by-dept")
+    @WithMockUser(username = "emp1@company.com", roles = {"EMPLOYEE"})
+    void employeeCannotAccessAnalytics() throws Exception {
+        mockMvc.perform(get("/api/analytics/headcount-by-dept"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @DisplayName("Employee can access self-service attendance clock GET /attendance/my")
     @WithUserDetails("emp1@company.com")
     void employeeCanAccessMyAttendance() throws Exception {
@@ -188,5 +260,81 @@ class RoleBoundarySecurityTest {
     void employeeCanAccessMyLeaves() throws Exception {
         mockMvc.perform(get("/leaves/my"))
                 .andExpect(status().isOk());
+    }
+
+    // =========================================================================
+    // 4. CSRF Protection Enforcement
+    // =========================================================================
+
+    @Test
+    @DisplayName("Mutating POST without CSRF token returns 403 Forbidden for HR Admin")
+    @WithMockUser(username = "hr1@company.com", roles = {"HR_ADMIN"})
+    void mutatingPostWithoutCsrfIsForbidden() throws Exception {
+        mockMvc.perform(post("/attendance/correct"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Mutating POST without CSRF token returns 403 Forbidden for Employee")
+    @WithMockUser(username = "emp1@company.com", roles = {"EMPLOYEE"})
+    void employeePostWithoutCsrfIsForbidden() throws Exception {
+        mockMvc.perform(post("/attendance/clock-in"))
+                .andExpect(status().isForbidden());
+    }
+
+    // =========================================================================
+    // 5. IDOR Session Revocation Protection
+    // =========================================================================
+
+    @Test
+    @DisplayName("Employee cannot revoke session belonging to another user (IDOR protection)")
+    @WithUserDetails("emp1@company.com")
+    @Transactional
+    void employeeCannotRevokeOtherUserSession() throws Exception {
+        User hrUser = userRepository.findByEmail("hr1@company.com").orElseThrow();
+
+        // Create a dummy active session for hr1
+        UserSession hrSession = new UserSession();
+        hrSession.setUser(hrUser);
+        hrSession.setSessionId("test-session-" + UUID.randomUUID());
+        hrSession.setIpAddress("127.0.0.1");
+        hrSession.setUserAgent("TestBrowser/1.0");
+        hrSession.setLoginAt(Instant.now());
+        userSessionRepository.saveAndFlush(hrSession);
+
+        // Employee emp1 attempts to revoke hr1's session -> Controller intercepts AccessDeniedException and sets flash error
+        mockMvc.perform(post("/sessions/" + hrSession.getId() + "/revoke").with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/sessions"))
+                .andExpect(flash().attributeExists("errorMessage"));
+
+        // Verify session was NOT revoked in the database
+        UserSession stillActive = userSessionRepository.findById(hrSession.getId()).orElseThrow();
+        assertNull(stillActive.getEndedReason(), "Other user's session must remain unrevoked after unauthorized attempt");
+    }
+
+    @Test
+    @DisplayName("Super Admin can revoke session belonging to any user")
+    @WithUserDetails("superadmin@company.com")
+    @Transactional
+    void superAdminCanRevokeAnyUserSession() throws Exception {
+        User empUser = userRepository.findByEmail("emp1@company.com").orElseThrow();
+
+        // Create a dummy active session for emp1
+        UserSession empSession = new UserSession();
+        empSession.setUser(empUser);
+        empSession.setSessionId("test-session-" + UUID.randomUUID());
+        empSession.setIpAddress("127.0.0.1");
+        empSession.setUserAgent("TestBrowser/1.0");
+        empSession.setLoginAt(Instant.now());
+        userSessionRepository.saveAndFlush(empSession);
+
+        mockMvc.perform(post("/sessions/" + empSession.getId() + "/revoke").with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/sessions"))
+                .andExpect(flash().attributeExists("successMessage"));
+
+        UserSession revokedSession = userSessionRepository.findById(empSession.getId()).orElseThrow();
+        assertEquals(SessionEndedReason.REVOKED, revokedSession.getEndedReason(), "Super Admin must be permitted to revoke any user session");
     }
 }
