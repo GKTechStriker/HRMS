@@ -1,18 +1,19 @@
 # Multi-stage hardened build for HRMS Spring Boot application
-# Stage 1: Build with Maven
-FROM maven:3.9-eclipse-temurin-25 AS builder
+# Stage 1: Build with Eclipse Temurin JDK 25 and project Maven Wrapper
+FROM eclipse-temurin:25-jdk AS builder
 WORKDIR /build
 
-# Cache dependencies layer
-COPY pom.xml .
-RUN mvn dependency:go-offline -B || true
+# Cache Maven wrapper and dependencies layer
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B || true
 
 # Copy source and build production artifact
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN ./mvnw clean package -DskipTests
 
-# Stage 2: Hardened Runtime
-FROM eclipse-temurin:25-jre-slim
+# Stage 2: Hardened Runtime with Eclipse Temurin JRE 25
+FROM eclipse-temurin:25-jre
 WORKDIR /app
 
 # Install curl for health probes and security auditing
