@@ -75,6 +75,7 @@ public class AbsoluteSessionTimeoutFilter extends OncePerRequestFilter {
                 || "/error".equals(path)
                 || "/favicon.ico".equals(path)
                 || "/api/health".equals(path)
+                || path.startsWith("/actuator/")
                 || path.startsWith("/css/")
                 || path.startsWith("/js/")
                 || path.startsWith("/images/")

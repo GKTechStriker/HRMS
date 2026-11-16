@@ -19,6 +19,17 @@ server:
       cookie:
         secure: true
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+
 hrms:
   demo-hints:
     enabled: false
