@@ -6,54 +6,75 @@
 
 <header th:replace="~{fragments/layout :: navbar('employees')}"></header>
 
-<main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+<main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-6">
 
-    <div th:if="${successMessage}" class="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 font-medium"
-         th:text="${successMessage}"></div>
-    <div th:if="${errorMessage}" class="p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800 font-medium"
-         th:text="${errorMessage}"></div>
+    <!-- Dismissible Flash Alerts -->
+    <div th:if="${successMessage}"
+         class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 font-medium flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
+            <span th:text="${successMessage}"></span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 hover:text-emerald-800"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    <div th:if="${errorMessage}"
+         class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-800 font-medium flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+            <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 flex-shrink-0"></i>
+            <span th:text="${errorMessage}"></span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-rose-600 hover:text-rose-800"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
 
     <!-- Header & HR Admin Controls (Omitted from DOM for SUPER_ADMIN per Section 9.4) -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-xl font-bold text-slate-900">Employee Directory</h1>
+            <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Employee Directory</h1>
             <p class="text-xs text-slate-500 mt-1"
                th:text="'Showing ' + ${employeePage.numberOfElements} + ' of ' + ${employeePage.totalElements} + ' employee record(s)'">
                 Showing records
             </p>
         </div>
 
-        <div class="flex items-center space-x-2.5">
+        <div class="flex flex-wrap items-center gap-2.5">
             <a th:href="@{/reports/employees/csv}"
-               class="inline-flex items-center px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg shadow-sm transition">
+               class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs transition">
+                <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
                 Export CSV
             </a>
-            <div sec:authorize="hasRole('HR_ADMIN')" class="flex items-center space-x-2.5">
+            <div sec:authorize="hasRole('HR_ADMIN')" class="flex flex-wrap items-center gap-2.5">
                 <a th:href="@{/employees/import}"
-                   class="inline-flex items-center px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg shadow-sm transition">
-                    CSV Bulk Import (Dry-Run)
+                   class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold rounded-xl shadow-2xs transition">
+                    <i data-lucide="upload" class="w-3.5 h-3.5 text-slate-500"></i>
+                    CSV Bulk Import
                 </a>
                 <a th:href="@{/employees/new}"
-                   class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
-                    + Add Employee
+                   class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm shadow-indigo-600/20 transition">
+                    <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+                    Add Employee
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Search & Filter Bar (Section 6.2 & 9.4) -->
+    <!-- Search & Filter Bar -->
     <form th:action="@{/employees}" method="get"
-          class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+          class="exec-card rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
         <div>
-            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Search</label>
-            <input type="text" name="search" th:value="${search}" placeholder="Name, EMP-xxx, or email..."
-                   class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none"/>
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Search</label>
+            <div class="relative">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                    <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                </span>
+                <input type="text" name="search" th:value="${search}" placeholder="Name, EMP-xxx, email..."
+                       class="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:outline-none"/>
+            </div>
         </div>
 
         <div>
-            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Department</label>
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Department</label>
             <select name="departmentId"
-                    class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:outline-none">
                 <option value="">All Departments</option>
                 <option th:each="d : ${departments}"
                         th:value="${d.id}"
@@ -63,9 +84,9 @@
         </div>
 
         <div>
-            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Job Role</label>
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Job Role</label>
             <select name="jobRoleId"
-                    class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:outline-none">
                 <option value="">All Job Roles</option>
                 <option th:each="jr : ${jobRoles}"
                         th:value="${jr.id}"
@@ -75,9 +96,9 @@
         </div>
 
         <div>
-            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Status</label>
+            <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Status</label>
             <select name="status"
-                    class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-600 focus:outline-none">
                 <option value="">All Statuses</option>
                 <option th:each="st : ${statuses}"
                         th:value="${st}"
@@ -86,67 +107,89 @@
             </select>
         </div>
 
-        <div class="flex space-x-2">
+        <div class="flex gap-2">
             <button type="submit"
-                    class="flex-1 py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition">
+                    class="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl transition">
+                <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
                 Filter
             </button>
             <a th:href="@{/employees}"
-               class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">
+               class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition">
                 Reset
             </a>
         </div>
     </form>
 
     <!-- Employee Directory Table -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="exec-card rounded-2xl overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-slate-200 text-sm">
-                <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-semibold">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
                 <tr>
-                    <th class="px-4 py-3 text-left">Code</th>
-                    <th class="px-4 py-3 text-left">Full Name</th>
-                    <th class="px-4 py-3 text-left">Email</th>
-                    <th class="px-4 py-3 text-left">Department</th>
-                    <th class="px-4 py-3 text-left">Job Role</th>
-                    <th class="px-4 py-3 text-left">Joined</th>
-                    <th class="px-4 py-3 text-left">Status</th>
-                    <th class="px-4 py-3 text-right">Actions</th>
+                    <th class="px-5 py-3.5 text-left">Employee</th>
+                    <th class="px-4 py-3.5 text-left">Code</th>
+                    <th class="px-4 py-3.5 text-left">Department &amp; Role</th>
+                    <th class="px-4 py-3.5 text-left">Joined</th>
+                    <th class="px-4 py-3.5 text-left">Status</th>
+                    <th class="px-5 py-3.5 text-right">Actions</th>
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                 <tr th:if="${employeePage.empty}">
-                    <td colspan="8" class="px-4 py-8 text-center text-slate-400 text-xs">
+                    <td colspan="6" class="px-4 py-12 text-center text-slate-400 text-xs">
                         No employees matched your filter criteria.
                     </td>
                 </tr>
-                <tr th:each="emp : ${employeePage.content}" class="hover:bg-slate-50">
-                    <td class="px-4 py-3 font-mono text-xs font-semibold text-blue-700" th:text="${emp.employeeCode}">EMP-001</td>
-                    <td class="px-4 py-3 font-medium text-slate-900" th:text="${emp.fullName}">Name</td>
-                    <td class="px-4 py-3 text-xs text-slate-600" th:text="${emp.user != null ? emp.user.email : '—'}">email</td>
-                    <td class="px-4 py-3 text-xs text-slate-700" th:text="${emp.department.name}">Department</td>
-                    <td class="px-4 py-3 text-xs text-slate-600" th:text="${emp.jobRole.title}">Role</td>
-                    <td class="px-4 py-3 font-mono text-xs text-slate-600" th:text="${emp.dateOfJoining}">2024-01-01</td>
-                    <td class="px-4 py-3">
+                <tr th:each="emp : ${employeePage.content}" class="group hover:bg-slate-50 transition">
+                    <td class="px-5 py-3.5">
+                        <div class="flex items-center gap-3">
+                            <img th:if="${emp.profilePhotoUrl != null and !emp.profilePhotoUrl.isBlank()}"
+                                 th:src="${emp.profilePhotoUrl}"
+                                 alt=""
+                                 class="w-9 h-9 rounded-xl object-cover border border-slate-200 flex-shrink-0"/>
+                            <div th:unless="${emp.profilePhotoUrl != null and !emp.profilePhotoUrl.isBlank()}"
+                                 class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0"
+                                 th:text="${#strings.substring(emp.fullName, 0, 1)}">E</div>
+                            <div class="min-w-0">
+                                <p class="font-semibold text-slate-900 text-sm truncate" th:text="${emp.fullName}">Name</p>
+                                <p class="text-xs text-slate-500 truncate" th:text="${emp.user != null ? emp.user.email : '—'}">email</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3.5">
+                        <span class="px-2 py-0.5 font-mono text-xs font-semibold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200/70"
+                              th:text="${emp.employeeCode}">EMP-001</span>
+                    </td>
+                    <td class="px-4 py-3.5">
+                        <p class="text-xs font-semibold text-slate-800" th:text="${emp.department.name}">Department</p>
+                        <p class="text-xs text-slate-500 mt-0.5" th:text="${emp.jobRole.title}">Role</p>
+                    </td>
+                    <td class="px-4 py-3.5 font-mono text-xs text-slate-600 whitespace-nowrap" th:text="${emp.dateOfJoining}">2024-01-01</td>
+                    <td class="px-4 py-3.5">
                         <span th:if="${emp.status.name() == 'ACTIVE'}"
-                              class="px-2 py-0.5 text-xs font-semibold rounded bg-blue-50 text-blue-700 border border-blue-200">
+                              class="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                             ACTIVE
                         </span>
                         <span th:if="${emp.status.name() == 'ON_LEAVE'}"
-                              class="px-2 py-0.5 text-xs font-semibold rounded bg-amber-50 text-amber-800 border border-amber-200">
+                              class="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                             ON_LEAVE
                         </span>
                         <span th:if="${emp.status.name() == 'INACTIVE'}"
-                              class="px-2 py-0.5 text-xs font-semibold rounded bg-red-50 text-red-700 border border-red-200">
+                              class="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                             INACTIVE
                         </span>
                     </td>
-                    <td class="px-4 py-3 text-right space-x-2">
-                        <a th:href="@{/employees/{id}(id=${emp.id})}"
-                           class="text-xs font-semibold text-blue-600 hover:text-blue-800">View</a>
-                        <a sec:authorize="hasRole('HR_ADMIN')"
-                           th:href="@{/employees/{id}/edit(id=${emp.id})}"
-                           class="text-xs font-semibold text-slate-600 hover:text-slate-900">Edit</a>
+                    <td class="px-5 py-3.5 text-right whitespace-nowrap">
+                        <div class="inline-flex items-center gap-1.5">
+                            <a th:href="@{/employees/{id}(id=${emp.id})}"
+                               class="px-2.5 py-1 rounded-lg text-xs font-semibold text-indigo-600 hover:bg-indigo-50 transition">View</a>
+                            <a sec:authorize="hasRole('HR_ADMIN')"
+                               th:href="@{/employees/{id}/edit(id=${emp.id})}"
+                               class="px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">Edit</a>
+                        </div>
                     </td>
                 </tr>
                 </tbody>
@@ -155,20 +198,20 @@
 
         <!-- Server-Side Pagination Controls -->
         <div th:if="${employeePage.totalPages > 1}"
-             class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
+             class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
             <div>
-                Page <span class="font-semibold" th:text="${employeePage.number + 1}">1</span>
-                of <span class="font-semibold" th:text="${employeePage.totalPages}">1</span>
+                Page <span class="font-bold text-slate-900" th:text="${employeePage.number + 1}">1</span>
+                of <span class="font-bold text-slate-900" th:text="${employeePage.totalPages}">1</span>
             </div>
-            <div class="flex space-x-2">
+            <div class="flex gap-2">
                 <a th:if="${employeePage.hasPrevious()}"
                    th:href="@{/employees(page=${employeePage.number - 1}, search=${search}, departmentId=${selectedDepartmentId}, jobRoleId=${selectedJobRoleId}, status=${selectedStatus})}"
-                   class="px-3 py-1 rounded bg-white border border-slate-300 hover:bg-slate-100 font-semibold">
+                   class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 font-semibold transition">
                     &larr; Previous
                 </a>
                 <a th:if="${employeePage.hasNext()}"
                    th:href="@{/employees(page=${employeePage.number + 1}, search=${search}, departmentId=${selectedDepartmentId}, jobRoleId=${selectedJobRoleId}, status=${selectedStatus})}"
-                   class="px-3 py-1 rounded bg-white border border-slate-300 hover:bg-slate-100 font-semibold">
+                   class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 font-semibold transition">
                     Next &rarr;
                 </a>
             </div>

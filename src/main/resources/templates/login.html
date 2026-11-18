@@ -1,79 +1,225 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Sign In')}"></head>
-<body class="bg-slate-100 text-slate-900 min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-50 text-slate-900 min-h-screen grid grid-cols-1 lg:grid-cols-12">
 
-<div class="w-full max-w-md bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-    <div class="bg-slate-900 px-6 py-6 text-white">
-        <div class="flex items-center space-x-3">
-            <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-blue-600 font-bold text-base">HR</span>
+<!-- Left Executive Brand & Security Showcase Panel -->
+<section class="hidden lg:flex lg:col-span-6 xl:col-span-7 relative flex-col justify-between p-12 xl:p-16 bg-[#0b0e14] text-white overflow-hidden">
+    <!-- Subtle Ambient Mesh & Dot Grid -->
+    <div class="absolute inset-0 bg-dot-grid opacity-30 pointer-events-none"></div>
+    <div class="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full bg-indigo-600/20 blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-32 -right-24 w-[420px] h-[420px] rounded-full bg-sky-500/15 blur-3xl pointer-events-none"></div>
+
+    <!-- Brand Mark -->
+    <div class="relative z-10 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 font-extrabold text-base shadow-lg shadow-indigo-500/30">HR</span>
             <div>
-                <h1 class="text-lg font-semibold leading-tight">Enterprise HRMS</h1>
-                <p class="text-xs text-slate-400">Role-Based Access &amp; Session-Audited Portal</p>
+                <span class="block font-bold text-base tracking-tight text-white">Enterprise HRMS</span>
+                <span class="block text-[11px] font-mono text-slate-400">WORKFORCE OS · v2.0</span>
+            </div>
+        </div>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[11px] font-semibold">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 status-dot-pulse"></span>
+            All Systems Operational
+        </span>
+    </div>
+
+    <!-- Hero Value Proposition -->
+    <div class="relative z-10 max-w-xl space-y-8 my-auto py-8">
+        <div class="space-y-4">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-400/25 text-indigo-300 text-xs font-semibold">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                Role-Based &amp; Session-Audited
+            </span>
+            <h1 class="text-4xl xl:text-5xl font-extrabold tracking-tight leading-[1.12] text-white">
+                Workforce Operations,
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-sky-300 to-emerald-300">Engineered for Precision.</span>
+            </h1>
+            <p class="text-sm xl:text-base text-slate-400 leading-relaxed max-w-lg">
+                Unified employee lifecycle, real-time attendance tracking, concurrency-safe leave approvals, and database-enforced immutable audit oversight.
+            </p>
+        </div>
+
+        <!-- 3 Compact Capability Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2">
+            <div class="p-4 rounded-xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-sm">
+                <i data-lucide="lock" class="w-4 h-4 text-indigo-400 mb-2.5"></i>
+                <p class="text-xs font-bold text-white">Strict RBAC</p>
+                <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Zero-write oversight for leadership; scoped HR &amp; self-service portals.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-sm">
+                <i data-lucide="file-check-2" class="w-4 h-4 text-emerald-400 mb-2.5"></i>
+                <p class="text-xs font-bold text-white">Immutable Audit</p>
+                <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">PostgreSQL trigger-protected JSONB history linked to every session.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-sm">
+                <i data-lucide="activity" class="w-4 h-4 text-sky-400 mb-2.5"></i>
+                <p class="text-xs font-bold text-white">Live Analytics</p>
+                <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Real-time headcount, 14-day attendance trends, and streaming CSVs.</p>
             </div>
         </div>
     </div>
 
-    <div class="p-6 space-y-5">
-        <div th:if="${param.error}" class="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
-            Invalid email or password, or your account has been suspended.
+    <!-- Footer Trust Metadata -->
+    <div class="relative z-10 flex items-center justify-between text-xs text-slate-500 pt-6 border-t border-white/[0.08]">
+        <span class="font-mono text-[11px]">Java 25 · Spring Boot 4.1 · PostgreSQL 16</span>
+        <span class="text-[11px]">8h Absolute Session Security</span>
+    </div>
+</section>
+
+<!-- Right Focused Sign-In Surface -->
+<section class="lg:col-span-6 xl:col-span-5 flex flex-col justify-between p-6 sm:p-10 lg:p-12 relative">
+    <!-- Top Right Theme Switcher & Mobile Logo -->
+    <div class="flex items-center justify-between">
+        <div class="flex lg:hidden items-center gap-2.5">
+            <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white font-extrabold text-sm">HR</span>
+            <span class="font-bold text-base tracking-tight text-slate-900">Enterprise HRMS</span>
+        </div>
+        <div class="hidden lg:block"></div>
+        <button type="button"
+                onclick="toggleHrmsTheme()"
+                title="Toggle Dark / Light Mode"
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-medium text-slate-600 hover:text-indigo-600 shadow-2xs transition">
+            <i data-lucide="moon" data-theme-moon class="w-3.5 h-3.5"></i>
+            <i data-lucide="sun" data-theme-sun class="w-3.5 h-3.5 hidden text-amber-400"></i>
+            <span>Theme</span>
+        </button>
+    </div>
+
+    <!-- Centered Auth Card -->
+    <div class="w-full max-w-md mx-auto my-auto py-8 space-y-6">
+        <div>
+            <h2 class="text-2xl font-extrabold tracking-tight text-slate-900">Sign in to your workspace</h2>
+            <p class="text-sm text-slate-500 mt-1.5">Enter your work email and password to access the HRMS portal.</p>
         </div>
 
-        <div th:if="${param.logout}" class="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 font-medium">
-            You have been signed out and your session has been closed.
+        <!-- Status Alerts -->
+        <div th:if="${param.error}" class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium flex items-start gap-2.5">
+            <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-600"></i>
+            <span>Invalid email or password, or your account has been suspended.</span>
         </div>
 
-        <div th:if="${param.expired}" class="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 font-medium">
-            Your session expired. Please sign in again.
+        <div th:if="${param.logout}" class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 font-medium flex items-start gap-2.5">
+            <i data-lucide="check-circle-2" class="w-4 h-4 flex-shrink-0 mt-0.5 text-emerald-600"></i>
+            <span>You have been signed out and your session has been closed.</span>
         </div>
 
-        <form th:action="@{/login}" method="post" class="space-y-4">
+        <div th:if="${param.expired}" class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 font-medium flex items-start gap-2.5">
+            <i data-lucide="clock-alert" class="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600"></i>
+            <span>Your session expired. Please sign in again.</span>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" th:action="@{/login}" method="post" class="space-y-4">
             <div>
-                <label for="username" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
+                <label for="username" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
                     Work Email
                 </label>
-                <input id="username" name="username" type="email" required autofocus
-                       placeholder="hr1@company.com"
-                       class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"/>
+                <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                        <i data-lucide="mail" class="w-4 h-4"></i>
+                    </span>
+                    <input id="username" name="username" type="email" required autofocus
+                           placeholder="hr1@company.com"
+                           class="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition"/>
+                </div>
             </div>
 
             <div>
-                <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
+                <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
                     Password
                 </label>
-                <input id="password" name="password" type="password" required
-                       placeholder="••••••••••••"
-                       class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"/>
+                <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                        <i data-lucide="lock" class="w-4 h-4"></i>
+                    </span>
+                    <input id="password" name="password" type="password" required
+                           placeholder="••••••••••••"
+                           class="w-full pl-10 pr-10 py-2.5 text-sm rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition"/>
+                    <button type="button"
+                            onclick="togglePasswordVisibility()"
+                            aria-label="Toggle Password Visibility"
+                            class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-700 transition">
+                        <i id="pwd-eye-show" data-lucide="eye" class="w-4 h-4"></i>
+                        <i id="pwd-eye-hide" data-lucide="eye-off" class="w-4 h-4 hidden"></i>
+                    </button>
+                </div>
             </div>
 
-            <button type="submit"
-                    class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg shadow-sm transition">
-                Sign In to HRMS
+            <button id="loginSubmitBtn" type="submit"
+                    class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-sm shadow-indigo-600/20 flex items-center justify-center gap-2 transition">
+                <span>Sign In to HRMS</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </button>
         </form>
 
-        <!-- Seeded Demo Accounts for Phase 1 Verification (Controlled by HRMS_DEMO_HINTS_ENABLED) -->
-        <div th:if="${demoHintsEnabled}" class="pt-4 border-t border-slate-200">
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                Seeded Verification Accounts (Password configured via <code class="text-slate-800 font-mono">.env</code>)
+        <!-- Seeded Demo Accounts (Click to Autofill Email when HRMS_DEMO_HINTS_ENABLED=true) -->
+        <div th:if="${demoHintsEnabled}" class="pt-5 border-t border-slate-200">
+            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2.5">
+                Quick-Fill Verification Accounts (Click to select)
             </p>
-            <div class="grid grid-cols-1 gap-1.5 text-xs text-slate-600">
-                <div class="flex justify-between bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200">
-                    <span class="font-medium text-purple-700">SUPER_ADMIN</span>
-                    <code class="font-mono">superadmin@company.com</code>
-                </div>
-                <div class="flex justify-between bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200">
-                    <span class="font-medium text-blue-700">HR_ADMIN (HR-001)</span>
-                    <code class="font-mono">hr1@company.com</code>
-                </div>
-                <div class="flex justify-between bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200">
-                    <span class="font-medium text-emerald-700">EMPLOYEE (EMP-002)</span>
-                    <code class="font-mono">emp1@company.com</code>
-                </div>
+            <div class="grid grid-cols-1 gap-2 text-xs">
+                <button type="button" onclick="fillDemoEmail('superadmin@company.com')"
+                        class="flex items-center justify-between bg-white hover:bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 transition text-left">
+                    <span class="font-semibold text-purple-700">SUPER_ADMIN</span>
+                    <code class="font-mono text-slate-600">superadmin@company.com</code>
+                </button>
+                <button type="button" onclick="fillDemoEmail('hr1@company.com')"
+                        class="flex items-center justify-between bg-white hover:bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 transition text-left">
+                    <span class="font-semibold text-indigo-700">HR_ADMIN (HR-001)</span>
+                    <code class="font-mono text-slate-600">hr1@company.com</code>
+                </button>
+                <button type="button" onclick="fillDemoEmail('emp1@company.com')"
+                        class="flex items-center justify-between bg-white hover:bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 transition text-left">
+                    <span class="font-semibold text-emerald-700">EMPLOYEE (EMP-002)</span>
+                    <code class="font-mono text-slate-600">emp1@company.com</code>
+                </button>
             </div>
         </div>
     </div>
-</div>
 
+    <p class="text-center text-[11px] text-slate-400">
+        Protected by CSRF, BCrypt &amp; PostgreSQL Session Enforcement
+    </p>
+</section>
+
+<script>
+    function togglePasswordVisibility() {
+        var input = document.getElementById('password');
+        var showIcon = document.getElementById('pwd-eye-show');
+        var hideIcon = document.getElementById('pwd-eye-hide');
+        if (!input) return;
+        var isPwd = input.type === 'password';
+        input.type = isPwd ? 'text' : 'password';
+        if (showIcon) showIcon.classList.toggle('hidden', isPwd);
+        if (hideIcon) hideIcon.classList.toggle('hidden', !isPwd);
+    }
+
+    function fillDemoEmail(email) {
+        var emailInput = document.getElementById('username');
+        var pwdInput = document.getElementById('password');
+        if (emailInput) {
+            emailInput.value = email;
+            emailInput.focus();
+            if (pwdInput) pwdInput.focus();
+            if (window.showHrmsToast) {
+                window.showHrmsToast('Selected ' + email + ' — enter password to sign in', 'info');
+            }
+        }
+    }
+
+    var loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', function() {
+            var btn = document.getElementById('loginSubmitBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.classList.add('opacity-80', 'cursor-wait');
+                btn.innerHTML = '<span>Signing in...</span>';
+            }
+        });
+    }
+</script>
 </body>
 </html>

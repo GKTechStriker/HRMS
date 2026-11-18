@@ -4,142 +4,386 @@
 <head th:fragment="head(title)">
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}"/>
     <title th:text="${title} + ' · Enterprise HRMS'">Enterprise HRMS</title>
-    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+    <!-- Pre-paint theme & sidebar state hydration to eliminate flicker -->
+    <script>
+        (function() {
+            try {
+                var t = localStorage.getItem('hrms_theme');
+                if (t === 'dark') document.documentElement.classList.add('dark');
+                if (localStorage.getItem('hrms_sidebar_collapsed') === '1') {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    }
+                }
+            }
+        };
+    </script>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script th:src="@{/js/app.js}" defer></script>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
 
-<!-- Shared Top & Role-Aware Navigation Fragment (Section 3.2 & Section 9.4) -->
-<header th:fragment="navbar(activeTab)" class="bg-slate-900 text-white border-b border-slate-800 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
-            <!-- Brand & Role-Aware Nav Links -->
-            <div class="flex items-center space-x-6">
-                <a th:href="@{/dashboard}" class="flex items-center space-x-2.5">
-                    <span class="inline-flex items-center justify-center w-8 h-8 rounded bg-blue-600 font-bold text-sm tracking-tight">HR</span>
-                    <span class="font-semibold text-lg tracking-tight">Enterprise HRMS</span>
-                </a>
+<!-- Executive Precision Navigation Shell: Collapsible Sidebar + Frosted Topbar + Ctrl+K Palette -->
+<div th:fragment="navbar(activeTab)">
 
-                <nav class="hidden md:flex items-center space-x-1 text-sm font-medium">
+    <!-- Mobile Navigation Backdrop -->
+    <div id="mobile-nav-backdrop"
+         onclick="closeMobileNav()"
+         class="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-xs lg:hidden"></div>
+
+    <!-- Collapsible Left Sidebar -->
+    <aside id="app-sidebar"
+           class="fixed inset-y-0 left-0 z-50 flex flex-col select-none">
+
+        <!-- Brand & Collapse Toggle -->
+        <div class="sidebar-header h-16 px-4 flex items-center justify-between border-b border-slate-200/80">
+            <a th:href="@{/dashboard}" class="flex items-center gap-2.5 min-w-0 group">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white font-extrabold text-sm tracking-tight shadow-sm shadow-indigo-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
+                    HR
+                </span>
+                <div class="sidebar-brand-text min-w-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-sm tracking-tight text-slate-900 truncate">Enterprise HRMS</span>
+                    </div>
+                    <span class="block text-[10px] font-mono font-medium text-slate-400 tracking-wide">WORKFORCE OS · v2.0</span>
+                </div>
+            </a>
+
+            <!-- Desktop Collapse Button -->
+            <button type="button"
+                    onclick="toggleHrmsSidebar()"
+                    title="Collapse / Expand Sidebar"
+                    class="hidden lg:inline-flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+                <i data-lucide="panel-left-close" class="w-4 h-4 sidebar-collapse-icon transition-transform duration-200"></i>
+            </button>
+
+            <!-- Mobile Close Button -->
+            <button type="button"
+                    onclick="closeMobileNav()"
+                    class="lg:hidden inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <!-- Grouped Navigation Links -->
+        <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+
+            <!-- Group 1: Workspace -->
+            <div>
+                <p class="sidebar-section-title px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    Workspace
+                </p>
+                <div class="space-y-0.5">
                     <a th:href="@{/dashboard}"
-                       th:classappend="${activeTab == 'dashboard'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
-                       class="px-3 py-2 rounded-md transition">
-                        Dashboard
+                       data-cmd-group="Workspace" data-cmd-icon="layout-dashboard"
+                       title="Dashboard"
+                       th:classappend="${activeTab == 'dashboard'} ? 'sidebar-link-active' : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'"
+                       class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4 flex-shrink-0"></i>
+                        <span class="sidebar-label truncate">Dashboard</span>
                     </a>
-
-                    <!-- Employee Directory visible to SUPER_ADMIN and HR_ADMIN -->
-                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
-                       th:href="@{/employees}"
-                       th:classappend="${activeTab == 'employees'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
-                       class="px-3 py-2 rounded-md transition">
-                        Employees
-                    </a>
-
-                    <!-- Departments & Org Structure visible to SUPER_ADMIN and HR_ADMIN -->
-                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
-                       th:href="@{/departments}"
-                       th:classappend="${activeTab == 'departments'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
-                       class="px-3 py-2 rounded-md transition">
-                        Departments
-                    </a>
-
-                    <!-- Self-Service My Profile link for EMPLOYEE role -->
-                    <a sec:authorize="hasRole('EMPLOYEE') and !hasRole('HR_ADMIN')"
-                       th:href="@{/employees/me}"
-                       th:classappend="${activeTab == 'employees'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
-                       class="px-3 py-2 rounded-md transition">
-                        My Profile
-                    </a>
-
-                    <!-- Attendance: Self-Service & HR Management -->
-                    <a th:href="@{/attendance/my}"
-                       th:classappend="${activeTab == 'my-attendance'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
-                       class="px-3 py-2 rounded-md transition">
-                        My Attendance
-                    </a>
-                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
-                       th:href="@{/attendance/manage}"
-                       th:classappend="${activeTab == 'manage-attendance'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
-                       class="px-3 py-2 rounded-md transition">
-                        Attendance Roster
-                    </a>
-
-                    <!-- Leaves: Self-Service & HR Approval Queue -->
-                    <a th:href="@{/leaves/my}"
-                       th:classappend="${activeTab == 'my-leaves'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
-                       class="px-3 py-2 rounded-md transition">
-                        My Leaves
-                    </a>
-                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
-                       th:href="@{/leaves/manage}"
-                       th:classappend="${activeTab == 'manage-leaves'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
-                       class="px-3 py-2 rounded-md transition">
-                        Leave Queue
-                    </a>
-
-                    <!-- Audit Trail visible ONLY to SUPER_ADMIN and HR_ADMIN (Section 4.2) -->
-                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
-                       th:href="@{/audit}"
-                       th:classappend="${activeTab == 'audit'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
-                       class="px-3 py-2 rounded-md transition">
-                        Audit Trail
-                    </a>
-
-                    <!-- Active Sessions visible to all authenticated users (scoped by role) -->
-                    <a th:href="@{/sessions}"
-                       th:classappend="${activeTab == 'sessions'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
-                       class="px-3 py-2 rounded-md transition">
-                        Sessions
-                    </a>
-
-                    <!-- Company Holidays visible to all authenticated users (GAP-09) -->
-                    <a th:href="@{/holidays}"
-                       th:classappend="${activeTab == 'holidays'} ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
-                       class="px-3 py-2 rounded-md transition">
-                        Holidays
-                    </a>
-                </nav>
+                </div>
             </div>
 
-            <!-- Right Side User Context & Logout -->
-            <div class="flex items-center space-x-4 text-sm" sec:authorize="isAuthenticated()">
-                <div class="flex items-center space-x-2">
-                    <span class="text-slate-300 font-medium" sec:authentication="name">user@company.com</span>
-                    <span sec:authorize="hasRole('SUPER_ADMIN')"
-                          class="px-2 py-0.5 text-xs font-semibold rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                        SUPER_ADMIN (Oversight)
-                    </span>
-                    <span sec:authorize="hasRole('HR_ADMIN')"
-                          class="px-2 py-0.5 text-xs font-semibold rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                        HR_ADMIN
-                    </span>
-                    <span sec:authorize="hasRole('EMPLOYEE') and !hasRole('HR_ADMIN')"
-                          class="px-2 py-0.5 text-xs font-semibold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                        EMPLOYEE
+            <!-- Group 2: People & Organization -->
+            <div>
+                <p class="sidebar-section-title px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    People &amp; Org
+                </p>
+                <div class="space-y-0.5">
+                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
+                       th:href="@{/employees}"
+                       data-cmd-group="People & Org" data-cmd-icon="users"
+                       title="Employee Directory"
+                       th:classappend="${activeTab == 'employees'} ? 'sidebar-link-active' : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'"
+                       class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium">
+                        <i data-lucide="users" class="w-4 h-4 flex-shrink-0"></i>
+                        <span class="sidebar-label truncate">Employees</span>
+                    </a>
+
+                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
+                       th:href="@{/departments}"
+                       data-cmd-group="People & Org" data-cmd-icon="building-2"
+                       title="Departments & Roles"
+                       th:classappend="${activeTab == 'departments'} ? 'sidebar-link-active' : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'"
+                       class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium">
+                        <i data-lucide="building-2" class="w-4 h-4 flex-shrink-0"></i>
+                        <span class="sidebar-label truncate">Departments</span>
+                    </a>
+
+                    <a sec:authorize="hasRole('EMPLOYEE') and !hasRole('HR_ADMIN')"
+                       th:href="@{/employees/me}"
+                       data-cmd-group="People & Org" data-cmd-icon="user-circle-2"
+                       title="My Profile"
+                       th:classappend="${activeTab == 'employees'} ? 'sidebar-link-active' : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'"
+                       class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium">
+                        <i data-lucide="user-circle-2" class="w-4 h-4 flex-shrink-0"></i>
+                        <span class="sidebar-label truncate">My Profile</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Group 3: Time & Leave -->
+            <div>
+                <p class="sidebar-section-title px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    Time &amp; Leave
+                </p>
+                <div class="space-y-0.5">
+                    <a th:href="@{/attendance/my}"
+                       data-cmd-group="Time & Leave" data-cmd-icon="clock"
+                       title="My Attendance"
+                       th:classappend="${activeTab == 'my-attendance'} ? 'sidebar-link-active' : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'"
+                       class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium">
+                        <i data-lucide="clock" class="w-4 h-4 flex-shrink-0"></i>
+                        <span class="sidebar-label truncate">My Attendance</span>
+                    </a>
+
+                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
+                       th:href="@{/attendance/manage}"
+                       data-cmd-group="Time & Leave" data-cmd-icon="clipboard-check"
+                       title="Attendance Roster"
+                       th:classappend="${activeTab == 'manage-attendance'} ? 'sidebar-link-active' : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'"
+                       class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium">
+                        <i data-lucide="clipboard-check" class="w-4 h-4 flex-shrink-0"></i>
+                        <span class="sidebar-label truncate">Attendance Roster</span>
+                    </a>
+
+                    <a th:href="@{/leaves/my}"
+                       data-cmd-group="Time & Leave" data-cmd-icon="calendar-off"
+                       title="My Leaves"
+                       th:classappend="${activeTab == 'my-leaves'} ? 'sidebar-link-active' : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'"
+                       class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium">
+                        <i data-lucide="calendar-off" class="w-4 h-4 flex-shrink-0"></i>
+                        <span class="sidebar-label truncate">My Leaves</span>
+                    </a>
+
+                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
+                       th:href="@{/leaves/manage}"
+                       data-cmd-group="Time & Leave" data-cmd-icon="inbox"
+                       title="Leave Approval Queue"
+                       th:classappend="${activeTab == 'manage-leaves'} ? 'sidebar-link-active' : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'"
+                       class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium">
+                        <i data-lucide="inbox" class="w-4 h-4 flex-shrink-0"></i>
+                        <span class="sidebar-label truncate">Leave Queue</span>
+                    </a>
+
+                    <a th:href="@{/holidays}"
+                       data-cmd-group="Time & Leave" data-cmd-icon="calendar-days"
+                       title="Company Holidays"
+                       th:classappend="${activeTab == 'holidays'} ? 'sidebar-link-active' : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'"
+                       class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium">
+                        <i data-lucide="calendar-days" class="w-4 h-4 flex-shrink-0"></i>
+                        <span class="sidebar-label truncate">Holidays</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Group 4: Governance & Security -->
+            <div>
+                <p class="sidebar-section-title px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    Governance
+                </p>
+                <div class="space-y-0.5">
+                    <a sec:authorize="hasAnyRole('SUPER_ADMIN', 'HR_ADMIN')"
+                       th:href="@{/audit}"
+                       data-cmd-group="Governance" data-cmd-icon="shield-alert"
+                       title="Immutable Audit Trail"
+                       th:classappend="${activeTab == 'audit'} ? 'sidebar-link-active' : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'"
+                       class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium">
+                        <i data-lucide="shield-alert" class="w-4 h-4 flex-shrink-0"></i>
+                        <span class="sidebar-label truncate">Audit Trail</span>
+                    </a>
+
+                    <a th:href="@{/sessions}"
+                       data-cmd-group="Governance" data-cmd-icon="monitor-smartphone"
+                       title="Active Sessions"
+                       th:classappend="${activeTab == 'sessions'} ? 'sidebar-link-active' : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'"
+                       class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium">
+                        <i data-lucide="monitor-smartphone" class="w-4 h-4 flex-shrink-0"></i>
+                        <span class="sidebar-label truncate">Sessions</span>
+                    </a>
+
+                    <a th:href="@{/account/password}"
+                       data-cmd-group="Account" data-cmd-icon="key-round"
+                       title="Account Password"
+                       th:classappend="${activeTab == 'account'} ? 'sidebar-link-active' : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'"
+                       class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium">
+                        <i data-lucide="key-round" class="w-4 h-4 flex-shrink-0"></i>
+                        <span class="sidebar-label truncate">Password</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Sidebar Bottom Identity Card -->
+        <div sec:authorize="isAuthenticated()" class="p-3 border-t border-slate-200/80">
+            <div class="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-slate-50 border border-slate-200/70">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-blue-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0 uppercase"
+                     th:text="${#strings.substring(#authentication.name, 0, 1)}">U</div>
+                <div class="sidebar-user-meta min-w-0 flex-1">
+                    <p class="text-xs font-semibold text-slate-800 truncate" sec:authentication="name">user@company.com</p>
+                    <p class="text-[10px] font-semibold mt-0.5">
+                        <span sec:authorize="hasRole('SUPER_ADMIN')" class="text-purple-600">SUPER_ADMIN · Oversight</span>
+                        <span sec:authorize="hasRole('HR_ADMIN')" class="text-indigo-600">HR_ADMIN · Operations</span>
+                        <span sec:authorize="hasRole('EMPLOYEE') and !hasRole('HR_ADMIN')" class="text-emerald-600">EMPLOYEE · Self-Service</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Sticky Frosted Executive Topbar -->
+    <header id="app-topbar" class="sticky top-0 z-30 h-16 w-full">
+        <div class="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3">
+
+            <!-- Left: Mobile Hamburger + Context Indicator -->
+            <div class="flex items-center gap-3 min-w-0">
+                <button type="button"
+                        onclick="openMobileNav()"
+                        aria-label="Open Navigation"
+                        class="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition">
+                    <i data-lucide="menu" class="w-4 h-4"></i>
+                </button>
+
+                <div class="hidden sm:flex items-center gap-2 text-xs text-slate-500">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-semibold text-[11px]">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 status-dot-pulse"></span>
+                        Live Portal
                     </span>
                 </div>
+            </div>
 
-                <a th:href="@{/account/password}"
-                   th:classappend="${activeTab == 'account'} ? 'bg-slate-700 text-white' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'"
-                   class="px-3 py-1.5 text-xs font-medium rounded border border-slate-700 transition">
-                    Password
-                </a>
+            <!-- Center/Right: Command Palette Trigger + Theme Switch + User Menu -->
+            <div class="flex items-center gap-2.5">
 
-                <form th:action="@{/logout}" method="post" class="inline">
-                    <button type="submit"
-                            class="px-3 py-1.5 text-xs font-medium rounded bg-slate-800 hover:bg-red-600/90 text-slate-200 hover:text-white border border-slate-700 transition">
-                        Sign Out
+                <!-- Global Ctrl+K Command Trigger -->
+                <button type="button"
+                        onclick="openCommandPalette()"
+                        class="group flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-slate-100/80 hover:bg-slate-100 border border-slate-200/90 text-xs text-slate-500 hover:text-slate-800 transition">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition"></i>
+                    <span class="hidden sm:inline font-medium">Quick jump...</span>
+                    <kbd class="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-500 bg-white border border-slate-200 rounded shadow-2xs">Ctrl K</kbd>
+                </button>
+
+                <!-- Theme Toggle (Light / Dark) -->
+                <button type="button"
+                        onclick="toggleHrmsTheme()"
+                        title="Toggle Dark / Light Mode"
+                        class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white hover:bg-slate-100 border border-slate-200/90 text-slate-600 hover:text-indigo-600 transition">
+                    <i data-lucide="moon" data-theme-moon class="w-4 h-4"></i>
+                    <i data-lucide="sun" data-theme-sun class="w-4 h-4 hidden text-amber-400"></i>
+                </button>
+
+                <!-- User Context Dropdown -->
+                <div class="relative" sec:authorize="isAuthenticated()">
+                    <button id="user-dropdown-trigger"
+                            type="button"
+                            onclick="toggleUserMenu(event)"
+                            class="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 border border-slate-200/90 transition">
+                        <span class="w-7 h-7 rounded-md bg-gradient-to-br from-indigo-600 to-violet-600 text-white font-bold text-xs flex items-center justify-center uppercase"
+                              th:text="${#strings.substring(#authentication.name, 0, 1)}">U</span>
+                        <span class="hidden md:inline text-xs font-semibold text-slate-700 max-w-[150px] truncate"
+                              sec:authentication="name">user@company.com</span>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
                     </button>
-                </form>
+
+                    <!-- Dropdown Popover -->
+                    <div id="user-dropdown-menu"
+                         class="hidden absolute right-0 mt-2 w-60 rounded-xl bg-white border border-slate-200 shadow-xl py-1.5 z-50">
+                        <div class="px-3.5 py-2.5 border-b border-slate-100">
+                            <p class="text-xs font-bold text-slate-900 truncate" sec:authentication="name">user@company.com</p>
+                            <div class="mt-1">
+                                <span sec:authorize="hasRole('SUPER_ADMIN')"
+                                      class="inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                                    SUPER_ADMIN (Oversight)
+                                </span>
+                                <span sec:authorize="hasRole('HR_ADMIN')"
+                                      class="inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    HR_ADMIN
+                                </span>
+                                <span sec:authorize="hasRole('EMPLOYEE') and !hasRole('HR_ADMIN')"
+                                      class="inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    EMPLOYEE
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="py-1">
+                            <a th:href="@{/account/password}"
+                               class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition">
+                                <i data-lucide="key-round" class="w-3.5 h-3.5 text-slate-400"></i>
+                                Change Password
+                            </a>
+                            <a th:href="@{/sessions}"
+                               class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition">
+                                <i data-lucide="monitor-smartphone" class="w-3.5 h-3.5 text-slate-400"></i>
+                                Active Sessions
+                            </a>
+                        </div>
+
+                        <div class="pt-1 border-t border-slate-100 px-2 pb-1">
+                            <form th:action="@{/logout}" method="post">
+                                <button type="submit"
+                                        class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition">
+                                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                                    Sign Out
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Global Command Palette Modal (Ctrl+K / Cmd+K) -->
+    <div id="cmd-palette"
+         class="hidden fixed inset-0 z-[70] bg-slate-950/60 backdrop-blur-sm flex items-start justify-center pt-[12vh] px-4 opacity-0 transition-opacity duration-150">
+        <div id="cmd-palette-box"
+             class="w-full max-w-lg rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-hidden transform scale-95 transition-transform duration-150">
+            <div class="flex items-center gap-3 px-4 py-3.5 border-b border-slate-200">
+                <i data-lucide="search" class="w-4 h-4 text-indigo-500 flex-shrink-0"></i>
+                <input id="cmd-palette-input"
+                       type="text"
+                       autocomplete="off"
+                       placeholder="Jump to page or run action (e.g. Employees, Leaves, Dark Mode)..."
+                       class="w-full bg-transparent border-0 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0"/>
+                <kbd class="px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-100 rounded border border-slate-200">ESC</kbd>
+            </div>
+            <div id="cmd-palette-results" class="max-h-72 overflow-y-auto p-2 space-y-0.5"></div>
+            <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Use <kbd class="font-mono px-1 rounded bg-white border border-slate-200">↑↓</kbd> to navigate &bull; <kbd class="font-mono px-1 rounded bg-white border border-slate-200">↵</kbd> to select</span>
+                <span class="font-mono">HRMS Command</span>
             </div>
         </div>
     </div>
-</header>
+</div>
 
-<footer th:fragment="footer" class="mt-auto border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
-    Enterprise HRMS v2.0 · Java 25 · Spring Boot 4.1 · PostgreSQL · Session-Linked Immutable Audit Trail
+<footer th:fragment="footer" class="mt-auto border-t border-slate-200/80 bg-white/70 backdrop-blur-sm py-3.5 px-6 text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+        <span>Enterprise HRMS v2.0 &middot; Java 25 &middot; Spring Boot 4.1 &middot; PostgreSQL</span>
+        <span class="text-[11px] text-slate-400">Press <kbd class="font-mono px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600">Ctrl K</kbd> for quick navigation</span>
+    </div>
 </footer>
 
 </body>
