@@ -1,45 +1,457 @@
 /**
- * HRMS Enterprise - Core Fallback Stylesheet (GAP-08)
- * Ensures robust baseline styling, typography, responsive utilities,
- * and high-contrast accessibility across all modern browsers.
+ * Enterprise HRMS — Executive Precision Design System (Option A)
+ * Linear & Stripe inspired high-craft light + dark mode system.
  */
 
 :root {
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
-    --slate-50: #f8fafc;
-    --slate-100: #f1f5f9;
-    --slate-200: #e2e8f0;
-    --slate-300: #cbd5e1;
-    --slate-400: #94a3b8;
-    --slate-500: #64748b;
-    --slate-600: #475569;
-    --slate-700: #334155;
-    --slate-800: #1e293b;
-    --slate-900: #0f172a;
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    --sidebar-w: 256px;
+    --topbar-h: 64px;
+
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --accent-soft: rgba(79, 70, 229, 0.08);
+
+    --bg-canvas: #f8f9fc;
+    --bg-surface: #ffffff;
+    --bg-subtle: #f1f5f9;
+    --border-hairline: rgba(15, 23, 42, 0.08);
+    --border-strong: rgba(15, 23, 42, 0.14);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+
+    --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 16px -4px rgba(15, 23, 42, 0.04);
+    --shadow-card-hover: 0 4px 12px rgba(15, 23, 42, 0.06), 0 12px 28px -8px rgba(79, 70, 229, 0.10);
 }
 
+html.sidebar-collapsed {
+    --sidebar-w: 76px;
+}
+
+html.dark {
+    color-scheme: dark;
+    --bg-canvas: #0b0e14;
+    --bg-surface: #121722;
+    --bg-subtle: #181f2e;
+    --border-hairline: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px -8px rgba(0, 0, 0, 0.45);
+    --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(99, 102, 241, 0.25);
+}
+
+/* Base Typography & Rendering */
 html, body {
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--slate-50);
-    color: var(--slate-900);
+    font-family: var(--font-sans);
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    transition: background-color 180ms ease, color 180ms ease;
 }
 
-/* Ensure clean table overflow handling */
+body {
+    background-image: radial-gradient(ellipse 80% 50% at 50% -15%, rgba(79, 70, 229, 0.055), transparent 65%);
+    background-attachment: fixed;
+}
+
+html.dark body {
+    background-color: var(--bg-canvas) !important;
+    color: var(--text-primary) !important;
+    background-image:
+        radial-gradient(ellipse 75% 45% at 20% -10%, rgba(79, 70, 229, 0.14), transparent 60%),
+        radial-gradient(ellipse 55% 40% at 85% 0%, rgba(14, 165, 233, 0.07), transparent 55%);
+}
+
+code, pre, .font-mono {
+    font-family: var(--font-mono) !important;
+}
+
+.tabular-nums {
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================
+   App Shell: Collapsible Sidebar & Topbar Alignment
+   ============================================================================ */
+@media (min-width: 1024px) {
+    body:has(#app-sidebar) {
+        padding-left: var(--sidebar-w);
+        transition: padding-left 220ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #app-sidebar {
+        width: var(--sidebar-w);
+        transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html.sidebar-collapsed #app-sidebar .sidebar-label,
+    html.sidebar-collapsed #app-sidebar .sidebar-section-title,
+    html.sidebar-collapsed #app-sidebar .sidebar-brand-text,
+    html.sidebar-collapsed #app-sidebar .sidebar-user-meta {
+        display: none;
+    }
+
+    html.sidebar-collapsed #app-sidebar .sidebar-link {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    html.sidebar-collapsed #app-sidebar .sidebar-header {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    html.sidebar-collapsed #app-sidebar .sidebar-collapse-icon {
+        transform: rotate(180deg);
+    }
+}
+
+/* Mobile Sidebar Slide Drawer */
+@media (max-width: 1023px) {
+    #app-sidebar {
+        width: 272px;
+        transform: translateX(-100%);
+        transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    html.mobile-nav-open #app-sidebar {
+        transform: translateX(0);
+    }
+    #mobile-nav-backdrop {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 220ms ease;
+    }
+    html.mobile-nav-open #mobile-nav-backdrop {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+/* Top Bar Frosted Glass */
+#app-topbar {
+    background-color: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border-hairline);
+}
+
+html.dark #app-topbar {
+    background-color: rgba(11, 14, 20, 0.80);
+    border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+
+/* Sidebar Surface */
+#app-sidebar {
+    background-color: #ffffff;
+    border-right: 1px solid var(--border-hairline);
+}
+
+html.dark #app-sidebar {
+    background-color: #0e121b;
+    border-right-color: rgba(255, 255, 255, 0.07);
+}
+
+.sidebar-link {
+    position: relative;
+    transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.sidebar-link-active {
+    background-color: rgba(79, 70, 229, 0.09);
+    color: #4338ca !important;
+    font-weight: 600;
+}
+
+.sidebar-link-active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 20%;
+    bottom: 20%;
+    width: 3px;
+    border-radius: 0 4px 4px 0;
+    background: linear-gradient(180deg, #4f46e5, #6366f1);
+}
+
+html.dark .sidebar-link-active {
+    background-color: rgba(99, 102, 241, 0.16);
+    color: #a5b4fc !important;
+}
+
+/* ============================================================================
+   Executive Cards, Micro-Interactions & Animations
+   ============================================================================ */
+.exec-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-hairline);
+    box-shadow: var(--shadow-card);
+    transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 200ms ease,
+                border-color 200ms ease;
+}
+
+.exec-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+    border-color: rgba(79, 70, 229, 0.24);
+}
+
+/* Page Entrance Animation */
+@keyframes execFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+main {
+    animation: execFadeUp 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Tactile Press Feedback */
+button:not(:disabled):active,
+a[class*="bg-"]:active {
+    transform: scale(0.985);
+}
+
+/* Skeleton Shimmer Loader */
+@keyframes shimmerSlide {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+    background: linear-gradient(90deg, rgba(148, 163, 184, 0.12) 25%, rgba(148, 163, 184, 0.24) 50%, rgba(148, 163, 184, 0.12) 75%);
+    background-size: 200% 100%;
+    animation: shimmerSlide 1.5s infinite linear;
+}
+
+/* Pulsing Status Dot */
+@keyframes statusPing {
+    75%, 100% {
+        transform: scale(2.1);
+        opacity: 0;
+    }
+}
+
+.status-dot-pulse {
+    position: relative;
+}
+
+.status-dot-pulse::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: inherit;
+    animation: statusPing 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Toast Progress Bar */
+@keyframes toastShrink {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+
+.toast-progress {
+    animation: toastShrink 4.8s linear forwards;
+}
+
+/* Subtle Dot Grid Pattern (Login & Hero Accent) */
+.bg-dot-grid {
+    background-image: radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Clean Scrollbars */
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.26);
+    border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.45);
+}
+
+/* Table Overflow */
 .table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
 
-/* Card & panel subtle shadow */
-.card-shadow {
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+/* Focus Accessibility */
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
-/* Button focus rings */
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
+/* ============================================================================
+   Universal Dark-Mode Surface & Contrast Adaptation (Covers All 17 Templates)
+   ============================================================================ */
+html.dark .bg-white {
+    background-color: #121722 !important;
+}
+html.dark .bg-slate-50,
+html.dark .bg-slate-50\/60 {
+    background-color: #161d2b !important;
+}
+html.dark .bg-slate-100 {
+    background-color: #1e2738 !important;
+}
+html.dark .bg-slate-200 {
+    background-color: #263248 !important;
+}
+
+html.dark .border-slate-100,
+html.dark .border-slate-200 {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+html.dark .border-slate-300 {
+    border-color: rgba(255, 255, 255, 0.14) !important;
+}
+html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+html.dark .text-slate-900,
+html.dark .text-slate-800 {
+    color: #f1f5f9 !important;
+}
+html.dark .text-slate-700 {
+    color: #cbd5e1 !important;
+}
+html.dark .text-slate-600 {
+    color: #94a3b8 !important;
+}
+html.dark .text-slate-500 {
+    color: #94a3b8 !important;
+}
+html.dark .text-slate-400 {
+    color: #64748b !important;
+}
+
+html.dark .hover\:bg-slate-50:hover,
+html.dark .hover\:bg-slate-100:hover {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+}
+html.dark .hover\:bg-slate-200:hover {
+    background-color: rgba(255, 255, 255, 0.09) !important;
+}
+html.dark .hover\:text-slate-900:hover {
+    color: #ffffff !important;
+}
+
+/* Dark Mode Form Controls */
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+    background-color: #0d111a !important;
+    border-color: rgba(255, 255, 255, 0.13) !important;
+    color: #f1f5f9 !important;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+    color: #64748b !important;
+}
+
+/* Dark Mode Semantic Status Pills & Alerts */
+html.dark .bg-blue-50,
+html.dark .bg-indigo-50,
+html.dark .bg-indigo-50\/60 {
+    background-color: rgba(99, 102, 241, 0.14) !important;
+    border-color: rgba(99, 102, 241, 0.28) !important;
+}
+html.dark .text-blue-700,
+html.dark .text-blue-600,
+html.dark .text-indigo-700,
+html.dark .text-indigo-800,
+html.dark .text-indigo-900 {
+    color: #a5b4fc !important;
+}
+
+html.dark .bg-emerald-50,
+html.dark .bg-green-50,
+html.dark .bg-emerald-100,
+html.dark .bg-green-100 {
+    background-color: rgba(16, 185, 129, 0.14) !important;
+    border-color: rgba(16, 185, 129, 0.28) !important;
+}
+html.dark .text-emerald-700,
+html.dark .text-emerald-800,
+html.dark .text-green-700,
+html.dark .text-green-800 {
+    color: #6ee7b7 !important;
+}
+
+html.dark .bg-amber-50,
+html.dark .bg-amber-50\/40,
+html.dark .bg-amber-100 {
+    background-color: rgba(245, 158, 11, 0.14) !important;
+    border-color: rgba(245, 158, 11, 0.28) !important;
+}
+html.dark .text-amber-700,
+html.dark .text-amber-800 {
+    color: #fcd34d !important;
+}
+html.dark .border-amber-200 {
+    border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+html.dark .bg-red-50,
+html.dark .bg-rose-50,
+html.dark .bg-red-100,
+html.dark .bg-rose-100 {
+    background-color: rgba(244, 63, 94, 0.14) !important;
+    border-color: rgba(244, 63, 94, 0.28) !important;
+}
+html.dark .text-red-700,
+html.dark .text-red-800,
+html.dark .text-rose-700,
+html.dark .text-rose-600 {
+    color: #fda4af !important;
+}
+
+html.dark .bg-purple-50 {
+    background-color: rgba(168, 85, 247, 0.15) !important;
+    border-color: rgba(168, 85, 247, 0.3) !important;
+}
+html.dark .text-purple-700 {
+    color: #d8b4fe !important;
+}
+
+/* Keep Solid Dark Panels Crisp */
+html.dark .bg-slate-900 {
+    background-color: #090c12 !important;
+}
+
+/* Command Palette Modal */
+.cmd-item-active {
+    background-color: rgba(79, 70, 229, 0.10);
+    color: #4338ca;
+}
+html.dark .cmd-item-active {
+    background-color: rgba(99, 102, 241, 0.20);
+    color: #c7d2fe;
 }

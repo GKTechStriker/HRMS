@@ -6,85 +6,96 @@
 
 <header th:replace="~{fragments/layout :: navbar('manage-leaves')}"></header>
 
-<main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+<main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-7 space-y-6">
 
     <!-- Flash Messages -->
-    <div th:if="${successMessage}" class="p-4 rounded-lg bg-green-50 border border-green-200 text-green-800 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-            <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+    <div th:if="${successMessage}" class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
             <span th:text="${successMessage}" class="font-medium"></span>
         </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 hover:text-emerald-800"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
-    <div th:if="${errorMessage}" class="p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-            <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+    <div th:if="${errorMessage}" class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+            <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 flex-shrink-0"></i>
             <span th:text="${errorMessage}" class="font-medium"></span>
         </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-rose-600 hover:text-rose-800"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
 
     <!-- Header -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="exec-card rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">Leave Approvals & Oversight</h1>
-            <p class="text-sm text-slate-500 mt-1">Review pending employee time-off applications and company leave history.</p>
+            <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Leave Approvals &amp; Oversight</h1>
+            <p class="text-xs text-slate-500 mt-1">Review pending employee time-off applications and company leave history.</p>
         </div>
-        <div class="flex items-center space-x-2">
-            <span class="px-3 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200"
-                  th:text="${pendingCount} + ' Pending Action'"></span>
+        <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 status-dot-pulse"></span>
+                <span th:text="${pendingCount} + ' Pending Action'">0 Pending Action</span>
+            </span>
         </div>
     </div>
 
     <!-- Pending Approval Queue -->
-    <div class="bg-white rounded-xl shadow-sm border border-amber-200 overflow-hidden">
-        <div class="p-6 bg-amber-50/40 border-b border-amber-200 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <span class="w-3 h-3 rounded-full bg-amber-500 animate-pulse"></span>
-                <h2 class="text-lg font-bold text-slate-800">Pending Approval Queue</h2>
+    <div class="exec-card rounded-2xl border-amber-200 overflow-hidden">
+        <div class="px-6 py-4 bg-amber-50/40 border-b border-amber-200 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <i data-lucide="inbox" class="w-4 h-4 text-amber-600"></i>
+                <h2 class="text-base font-bold text-slate-900">Pending Approval Queue</h2>
             </div>
-            <span class="text-xs font-medium text-amber-700">Requires HR Admin Decision</span>
+            <span class="text-xs font-semibold text-amber-700">Requires HR Admin Decision</span>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm text-slate-600">
-                <thead class="bg-slate-50 border-b border-slate-200 text-xs uppercase font-semibold text-slate-500">
+                <thead class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider font-semibold text-slate-500">
                 <tr>
-                    <th class="py-3 px-4">Employee</th>
-                    <th class="py-3 px-4">Leave Type</th>
-                    <th class="py-3 px-4">Duration</th>
-                    <th class="py-3 px-4">Days</th>
-                    <th class="py-3 px-4">Employee Reason</th>
-                    <th class="py-3 px-4">Requested At</th>
-                    <th class="py-3 px-4 text-right" sec:authorize="hasRole('HR_ADMIN')">Decision</th>
+                    <th class="py-3.5 px-5">Employee</th>
+                    <th class="py-3.5 px-4">Leave Type</th>
+                    <th class="py-3.5 px-4">Duration</th>
+                    <th class="py-3.5 px-4">Days</th>
+                    <th class="py-3.5 px-4">Employee Reason</th>
+                    <th class="py-3.5 px-4">Requested At</th>
+                    <th class="py-3.5 px-5 text-right" sec:authorize="hasRole('HR_ADMIN')">Decision</th>
                 </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200">
+                <tbody class="divide-y divide-slate-100">
                 <tr th:if="${#lists.isEmpty(pendingRequests)}">
-                    <td colspan="7" class="py-8 text-center text-slate-400 text-sm">
+                    <td colspan="7" class="py-10 text-center text-slate-400 text-xs">
                         All leave requests are up-to-date! No pending applications in the queue.
                     </td>
                 </tr>
                 <tr th:each="req : ${pendingRequests}" class="hover:bg-slate-50 transition">
-                    <td class="py-3 px-4">
-                        <div class="font-medium text-slate-800" th:text="${req.employee != null ? req.employee.fullName : '-'}"></div>
-                        <div class="text-xs font-mono text-slate-400" th:text="${req.employee != null ? req.employee.employeeCode : '-'}"></div>
+                    <td class="py-3.5 px-5">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0"
+                                 th:text="${req.employee != null ? #strings.substring(req.employee.fullName, 0, 1) : '?'}">E</div>
+                            <div>
+                                <div class="font-semibold text-slate-900 text-xs" th:text="${req.employee != null ? req.employee.fullName : '-'}"></div>
+                                <div class="text-[11px] font-mono text-slate-400" th:text="${req.employee != null ? req.employee.employeeCode : '-'}"></div>
+                            </div>
+                        </div>
                     </td>
-                    <td class="py-3 px-4">
-                        <span class="font-semibold text-slate-800" th:text="${req.leaveType != null ? req.leaveType.name : '-'}"></span>
+                    <td class="py-3.5 px-4">
+                        <span class="font-semibold text-slate-800 text-xs" th:text="${req.leaveType != null ? req.leaveType.name : '-'}"></span>
                     </td>
-                    <td class="py-3 px-4 text-xs font-mono text-slate-700">
+                    <td class="py-3.5 px-4 text-xs font-mono text-slate-700 whitespace-nowrap">
                         <span th:text="${#temporals.format(req.startDate, 'dd MMM yyyy')}"></span> &rarr;
                         <span th:text="${#temporals.format(req.endDate, 'dd MMM yyyy')}"></span>
                     </td>
-                    <td class="py-3 px-4 font-bold text-slate-800" th:text="${#numbers.formatDecimal(req.totalDays, 1, 1)} + 'd'"></td>
-                    <td class="py-3 px-4 text-xs text-slate-600 max-w-xs truncate" th:text="${req.reason}"></td>
-                    <td class="py-3 px-4 text-xs text-slate-400"
+                    <td class="py-3.5 px-4 font-mono font-bold text-slate-900 text-xs" th:text="${#numbers.formatDecimal(req.totalDays, 1, 1)} + 'd'"></td>
+                    <td class="py-3.5 px-4 text-xs text-slate-600 max-w-xs truncate" th:text="${req.reason}"></td>
+                    <td class="py-3.5 px-4 text-xs text-slate-400 whitespace-nowrap"
                         th:text="${@timeFmt.formatInstant(req.createdAt, 'dd MMM, hh:mm a')}"></td>
-                    <td class="py-3 px-4 text-right space-x-2" sec:authorize="hasRole('HR_ADMIN')">
+                    <td class="py-3.5 px-5 text-right whitespace-nowrap space-x-1.5" sec:authorize="hasRole('HR_ADMIN')">
                         <!-- Quick Approve Form -->
                         <form th:action="@{/leaves/{id}/approve(id=${req.id})}" method="post" class="inline"
                               onsubmit="return confirm('Approve this leave request? This will deduct quota and set attendance to ON_LEAVE.');">
                             <button type="submit"
-                                    class="inline-flex items-center px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-md shadow-sm transition">
+                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-2xs transition">
+                                <i data-lucide="check" class="w-3.5 h-3.5"></i>
                                 Approve
                             </button>
                         </form>
@@ -94,7 +105,8 @@
                                 th:data-emp-name="${req.employee != null ? req.employee.fullName : ''}"
                                 th:data-days="${req.totalDays}"
                                 onclick="openRejectModal(this)"
-                                class="inline-flex items-center px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-md transition border border-rose-200">
+                                class="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-lg transition border border-rose-200">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
                             Reject
                         </button>
                     </td>
@@ -105,55 +117,55 @@
     </div>
 
     <!-- Company Leave History -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="p-6 border-b border-slate-200">
-            <h2 class="text-lg font-bold text-slate-800">Company Leave History</h2>
+    <div class="exec-card rounded-2xl overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200">
+            <h2 class="text-base font-bold text-slate-900">Company Leave History</h2>
             <p class="text-xs text-slate-500 mt-0.5">Historical log of all approved, rejected, and cancelled requests</p>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm text-slate-600">
-                <thead class="bg-slate-50 border-b border-slate-200 text-xs uppercase font-semibold text-slate-500">
+                <thead class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider font-semibold text-slate-500">
                 <tr>
-                    <th class="py-3 px-4">Employee</th>
-                    <th class="py-3 px-4">Type</th>
-                    <th class="py-3 px-4">Duration</th>
-                    <th class="py-3 px-4">Days</th>
-                    <th class="py-3 px-4">Status</th>
-                    <th class="py-3 px-4">Decision By</th>
-                    <th class="py-3 px-4">Notes / Rejection Reason</th>
+                    <th class="py-3.5 px-5">Employee</th>
+                    <th class="py-3.5 px-4">Type</th>
+                    <th class="py-3.5 px-4">Duration</th>
+                    <th class="py-3.5 px-4">Days</th>
+                    <th class="py-3.5 px-4">Status</th>
+                    <th class="py-3.5 px-4">Decision By</th>
+                    <th class="py-3.5 px-5">Notes / Rejection Reason</th>
                 </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200">
+                <tbody class="divide-y divide-slate-100">
                 <tr th:if="${#lists.isEmpty(allRequests)}">
-                    <td colspan="7" class="py-8 text-center text-slate-400 text-sm">
+                    <td colspan="7" class="py-10 text-center text-slate-400 text-xs">
                         No historical leave records found.
                     </td>
                 </tr>
                 <tr th:each="req : ${allRequests}" class="hover:bg-slate-50 transition">
-                    <td class="py-3 px-4">
-                        <div class="font-medium text-slate-800" th:text="${req.employee != null ? req.employee.fullName : '-'}"></div>
-                        <div class="text-xs font-mono text-slate-400" th:text="${req.employee != null ? req.employee.employeeCode : '-'}"></div>
+                    <td class="py-3.5 px-5">
+                        <div class="font-semibold text-slate-900 text-xs" th:text="${req.employee != null ? req.employee.fullName : '-'}"></div>
+                        <div class="text-[11px] font-mono text-slate-400" th:text="${req.employee != null ? req.employee.employeeCode : '-'}"></div>
                     </td>
-                    <td class="py-3 px-4 font-semibold text-slate-700" th:text="${req.leaveType != null ? req.leaveType.name : '-'}"></td>
-                    <td class="py-3 px-4 text-xs font-mono text-slate-700">
+                    <td class="py-3.5 px-4 font-semibold text-slate-700 text-xs" th:text="${req.leaveType != null ? req.leaveType.name : '-'}"></td>
+                    <td class="py-3.5 px-4 text-xs font-mono text-slate-700 whitespace-nowrap">
                         <span th:text="${#temporals.format(req.startDate, 'dd MMM yyyy')}"></span> &rarr;
                         <span th:text="${#temporals.format(req.endDate, 'dd MMM yyyy')}"></span>
                     </td>
-                    <td class="py-3 px-4 font-bold text-slate-800" th:text="${#numbers.formatDecimal(req.totalDays, 1, 1)} + 'd'"></td>
-                    <td class="py-3 px-4">
+                    <td class="py-3.5 px-4 font-mono font-bold text-slate-900 text-xs" th:text="${#numbers.formatDecimal(req.totalDays, 1, 1)} + 'd'"></td>
+                    <td class="py-3.5 px-4">
                         <span th:text="${req.status.displayName}"
-                              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
-                              th:classappend="${req.status.name() == 'APPROVED' ? 'bg-green-100 text-green-800' :
-                                              (req.status.name() == 'PENDING' ? 'bg-amber-100 text-amber-800' :
-                                              (req.status.name() == 'REJECTED' ? 'bg-red-100 text-red-800' : 'bg-slate-200 text-slate-700'))}">
+                              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border"
+                              th:classappend="${req.status.name() == 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                              (req.status.name() == 'PENDING' ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                                              (req.status.name() == 'REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-slate-100 text-slate-700 border-slate-200'))}">
                         </span>
                     </td>
-                    <td class="py-3 px-4 text-xs text-slate-600">
+                    <td class="py-3.5 px-4 text-xs text-slate-600">
                         <span th:if="${req.actionedBy != null}" th:text="${req.actionedBy.email}"></span>
                         <span th:if="${req.actionedBy == null}">-</span>
                     </td>
-                    <td class="py-3 px-4 text-xs text-slate-500 max-w-xs truncate">
+                    <td class="py-3.5 px-5 text-xs text-slate-500 max-w-xs truncate">
                         <span th:if="${req.rejectionReason != null}" class="text-rose-600 font-medium" th:text="${req.rejectionReason}"></span>
                         <span th:if="${req.rejectionReason == null}" th:text="${req.reason}"></span>
                     </td>
@@ -164,39 +176,44 @@
     </div>
 
     <!-- Reject Leave Modal -->
-    <div id="rejectModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-200">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                <h3 class="text-lg font-bold text-slate-800">Decline Leave Request</h3>
+    <div id="rejectModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
+            <div class="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i>
+                    </span>
+                    <h3 class="text-base font-bold text-slate-900">Decline Leave Request</h3>
+                </div>
                 <button type="button" onclick="closeRejectModal()" class="text-slate-400 hover:text-slate-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
             <form id="rejectForm" method="post" th:attr="data-action-prefix=@{/leaves/}" class="space-y-4">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <p class="text-sm text-slate-600">
-                    Reject leave application for <strong id="rejectEmpName" class="text-slate-800"></strong>
-                    (<span id="rejectDaysLabel"></span> days)?
+                    Reject leave application for <strong id="rejectEmpName" class="text-slate-900"></strong>
+                    (<span id="rejectDaysLabel" class="font-mono font-semibold"></span> days)?
                 </p>
 
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
                         Reason for Rejection <span class="text-rose-500">*</span>
                     </label>
                     <textarea name="rejectionReason" rows="3" required
                               placeholder="e.g. Critical sprint milestone deadline; please reschedule."
-                              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
+                              class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
                     <p class="text-[11px] text-slate-400 mt-1">This explanation will be emailed to the employee and logged in the immutable audit trail.</p>
                 </div>
 
-                <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                <div class="flex items-center justify-end gap-2.5 pt-3.5 border-t border-slate-100">
                     <button type="button" onclick="closeRejectModal()"
-                            class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 hover:bg-slate-50 transition">
+                            class="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
                         Cancel
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium transition shadow-sm">
+                            class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold transition shadow-sm">
                         Confirm Rejection
                     </button>
                 </div>
@@ -206,7 +223,6 @@
 </main>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>
-<!-- Modal Control Script -->
 <script>
     function openRejectModal(btn) {
         const reqId = btn.getAttribute('data-req-id');
