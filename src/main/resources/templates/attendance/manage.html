@@ -107,7 +107,7 @@
                     <th class="py-3 px-4">Duration</th>
                     <th class="py-3 px-4">Status</th>
                     <th class="py-3 px-4">Audit Note</th>
-                    <th class="py-3 px-4 text-right" sec:authorize="hasRole('HR_ADMIN')">Action</th>
+                    <th class="py-3 px-4 text-right" th:if="${#authorization.expression('hasRole(''HR_ADMIN'')')}">Action</th>
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200">
@@ -150,7 +150,7 @@
                     </td>
                     <td class="py-3 px-4 text-xs text-slate-500 max-w-xs truncate"
                         th:text="${record.correctionReason != null ? record.correctionReason : (record.notes != null ? record.notes : '-')}"></td>
-                    <td class="py-3 px-4 text-right" sec:authorize="hasRole('HR_ADMIN')">
+                    <td class="py-3 px-4 text-right" th:if="${#authorization.expression('hasRole(''HR_ADMIN'')')}">
                         <button type="button"
                                 class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-md transition"
                                 th:data-record-id="${record.id}"
@@ -159,8 +159,8 @@
                                 th:data-date="${record.workDate}"
                                 th:data-status="${record.status}"
                                 th:data-mode="${record.workMode}"
-                                th:data-in="${@timeFmt.formatDateTimeOrEmpty(record.clockIn, 'HH:mm')}"
-                                th:data-out="${@timeFmt.formatDateTimeOrEmpty(record.clockOut, 'HH:mm')}"
+                                th:data-in="${record.clockIn != null ? #temporals.format(record.clockIn, 'HH:mm') : ''}"
+                                th:data-out="${record.clockOut != null ? #temporals.format(record.clockOut, 'HH:mm') : ''}"
                                 th:data-reason="${record.correctionReason != null ? record.correctionReason : ''}"
                                 onclick="openCorrectionModal(this)">
                             Correct

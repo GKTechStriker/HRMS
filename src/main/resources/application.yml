@@ -90,6 +90,7 @@ hrms:
     allowed-origins: ${HRMS_CORS_ALLOWED_ORIGINS:}
   seed:
     enabled: ${HRMS_SEED_ENABLED:true}
+    demo-data: ${HRMS_SEED_DEMO_DATA:true}
   demo-hints:
     enabled: ${HRMS_DEMO_HINTS_ENABLED:true}
   security:
