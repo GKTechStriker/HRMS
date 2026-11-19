@@ -506,24 +506,25 @@ public class DataInitializer implements ApplicationRunner {
                 holdPendingBalance(sneha, sickType, currentYear, new BigDecimal("2.0"));
             }
 
-            // 4. Pending: Aarav Mehta (emp1) - 3 days Annual in December
-            Employee aarav = createdEmployees.get("emp1@company.com");
-            if (aarav != null) {
+            // 4. Pending: Ananya Roy (emp4) - 3 days Annual in December
+            Employee ananya = createdEmployees.get("emp4@company.com");
+            if (ananya != null) {
                 LocalDate start = LocalDate.of(currentYear, 12, 7);
                 LocalDate end = LocalDate.of(currentYear, 12, 9);
-                createLeaveRequest(aarav, annualType, start, end, new BigDecimal("3.0"),
+                createLeaveRequest(ananya, annualType, start, end, new BigDecimal("3.0"),
                         "Annual winter vacation with family.", LeaveStatus.PENDING, null, null, null);
-                holdPendingBalance(aarav, annualType, currentYear, new BigDecimal("3.0"));
+                holdPendingBalance(ananya, annualType, currentYear, new BigDecimal("3.0"));
             }
 
-            // 5. Approved: Aarav Mehta (emp1) - 3 days Annual in October
-            if (aarav != null && hr1User != null) {
+            // 5. Approved: Pooja Patel (emp6) - 3 days Annual in October
+            Employee pooja = createdEmployees.get("emp6@company.com");
+            if (pooja != null && hr1User != null) {
                 LocalDate start = LocalDate.of(currentYear, 10, 12);
                 LocalDate end = LocalDate.of(currentYear, 10, 14);
-                createLeaveRequest(aarav, annualType, start, end, new BigDecimal("3.0"),
+                createLeaveRequest(pooja, annualType, start, end, new BigDecimal("3.0"),
                         "Pre-Diwali family travel and home celebration.", LeaveStatus.APPROVED, hr1User,
                         OffsetDateTime.of(currentYear, 10, 8, 11, 30, 0, 0, ZoneOffset.UTC), null);
-                consumeApprovedBalance(aarav, annualType, currentYear, new BigDecimal("3.0"));
+                consumeApprovedBalance(pooja, annualType, currentYear, new BigDecimal("3.0"));
             }
 
             // 6. Approved: Priya Sharma (hr1) - 2 days Casual in September
@@ -633,9 +634,9 @@ public class DataInitializer implements ApplicationRunner {
                     continue;
                 }
 
-                // Preserve clean test dates for emp1 to prevent collision with unit/integration test suites
+                // Preserve clean test state for emp1 to prevent collision with unit/integration test suites
                 String empEmail = (emp.getUser() != null) ? emp.getUser().getEmail() : "";
-                if ("emp1@company.com".equals(empEmail) && (dayOffset == 1 || dayOffset == 7)) {
+                if ("emp1@company.com".equals(empEmail)) {
                     continue;
                 }
 
@@ -671,8 +672,8 @@ public class DataInitializer implements ApplicationRunner {
             rec.setClockInIp("192.168.1.10");
             rec.setNotes("Morning on-site HR desk");
             attendanceRecordRepository.save(rec);
-        } else if ("emp1@company.com".equals(email)) {
-            // Aarav Mehta: Clocked in at 09:14 AM ON_SITE
+        } else if ("emp2@company.com".equals(email)) {
+            // Neha Kapoor: Clocked in at 09:14 AM ON_SITE
             AttendanceRecord rec = new AttendanceRecord(emp, today, AttendanceStatus.PRESENT, WorkMode.ON_SITE);
             rec.setClockIn(OffsetDateTime.of(today, LocalTime.of(9, 14, 0), istOffset));
             rec.setClockInIp("192.168.1.12");
