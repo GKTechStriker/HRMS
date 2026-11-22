@@ -3,7 +3,7 @@ SPRING BOOT STARTER FILES — FILE MAPPING GUIDE
 
 This shows where each file should go in your project.
 
-PROJECT ROOT (hrms/)
+PROJECT ROOT
 │
 ├── pom.xml                                (already have from template)
 ├── Dockerfile                             (already have from template)

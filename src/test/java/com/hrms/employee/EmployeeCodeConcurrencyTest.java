@@ -11,7 +11,7 @@ import java.util.concurrent.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Milestone 2 Concurrency Test:
+ * Concurrency Verification Suite:
  * Verifies that concurrent employee code allocations (EMP-xxx) via PostgreSQL sequence
  * produce 100% unique codes with zero collisions.
  */

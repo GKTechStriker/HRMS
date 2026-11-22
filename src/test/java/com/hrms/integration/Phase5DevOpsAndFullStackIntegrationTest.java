@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Milestone 5 Full-Stack Integration Suite (GAP-10 & GAP-11).
+ * Full-Stack Integration & Actuator Suite.
  *
  * Verifies:
  * 1. Actuator liveness/readiness probes (/actuator/health, /actuator/info).
