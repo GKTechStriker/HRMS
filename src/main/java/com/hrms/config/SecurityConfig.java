@@ -104,20 +104,20 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/employees/**", "/departments/**").hasRole("HR_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/employees/new", "/employees/*/edit", "/employees/import", "/departments/new").hasRole("HR_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/employees", "/departments/**").hasAnyRole("SUPER_ADMIN", "HR_ADMIN")
-                // Attendance & Daily Operations (Milestone 3)
+                // Attendance & Daily Operations
                 .requestMatchers(HttpMethod.POST, "/attendance/correct").hasRole("HR_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/attendance/manage").hasAnyRole("SUPER_ADMIN", "HR_ADMIN")
                 .requestMatchers("/attendance/**").authenticated()
-                // Leave Management (Milestone 3B)
+                // Leave Management
                 .requestMatchers(HttpMethod.POST, "/leaves/*/approve", "/leaves/*/reject").hasRole("HR_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/leaves/manage").hasAnyRole("SUPER_ADMIN", "HR_ADMIN")
                 .requestMatchers("/leaves/**").authenticated()
-                // Company Holidays & Observances (GAP-09)
+                // Company Holidays & Observances
                 .requestMatchers(HttpMethod.POST, "/holidays/**").hasRole("HR_ADMIN")
                 .requestMatchers("/holidays/**").authenticated()
-                // Analytics & Reporting (Milestone 4)
+                // Analytics & Reporting
                 .requestMatchers("/api/analytics/**", "/reports/**").hasAnyRole("SUPER_ADMIN", "HR_ADMIN")
-                // Audit Trail & Session Oversight (Section 8.2)
+                // Audit Trail & Session Oversight
                 .requestMatchers("/audit/**").hasAnyRole("SUPER_ADMIN", "HR_ADMIN")
                 .requestMatchers("/sessions/**").hasAnyRole("SUPER_ADMIN", "HR_ADMIN", "EMPLOYEE")
                 .anyRequest().authenticated()

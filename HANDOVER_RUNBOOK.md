@@ -110,12 +110,12 @@ All seed users are automatically provisioned during database initialization via 
 - `GET /sessions` — Live active session viewer (Spring Session JDBC)
 - `POST /sessions/{id}/revoke` — Revoke live session (self-service for Employee/HR Admin, global for Super Admin)
 
-### Visual Analytics Endpoints (Milestone 4A)
+### Visual Analytics Endpoints
 - `GET /api/analytics/headcount-by-dept` — JSON distribution of active headcount by department
 - `GET /api/analytics/attendance-trends?days=14` — 14-day rolling continuous status counts
 - `GET /api/analytics/leave-usage` — Cumulative approved leave days grouped by leave category
 
-### Tabular Reporting & RFC-4180 Streaming CSV Exports (Milestone 4B & GAP-07)
+### Tabular Reporting & RFC-4180 Streaming CSV Exports
 - `GET /reports/employees/csv` — Full employee directory export (StreamingResponseBody)
 - `GET /reports/attendance/csv?date=YYYY-MM-DD&departmentId=...` — Daily roster export
 - `GET /reports/audit/csv?action=...&fromDate=...&toDate=...` — Filtered immutable audit log export with CSV formula injection defense
@@ -201,18 +201,18 @@ pg_restore -U hrms_spring -h localhost -d hrms_springboot -v --clean /backup/hrm
 
 ---
 
-## 6. Acceptance & Delivery Verification Checklist
+## 6. Architecture & Subsystem Verification Matrix
 
-| Milestone Phase | Deliverable | Status |
+| Subsystem / Module | Technical Deliverable & Architecture | Status |
 | :--- | :--- | :--- |
-| **Milestone 1** | Spring Security, BCrypt, Session JDBC, Append-Only Immutable Audit Trigger, `@Audited` Aspect | Verified |
-| **Milestone 2** | Atomic sequences, Org Structure CRUD, Employee Directory, 2-Step Dry-Run CSV Bulk Import | Verified |
-| **Milestone 3A** | Workday punch engine, Nightly finalizer cron (23:59 Mon-Fri), Audited manual correction, Attendance views | Verified |
-| **Milestone 3B** | Annual leave quotas, Pessimistic lock hold-then-convert, Attendance auto-sync, Concurrency suite | Verified |
-| **Milestone 4A** | Analytics engine, Live Chart.js Visual Endpoints (Headcount, 14-Day Attendance, Leave Usage) | Delivered |
-| **Milestone 4B** | RFC-4180 Streaming CSV Export engine (Employees, Attendance roster, Audited log), Download triggers | Delivered |
-| **Milestone 4C** | System Hardening & Role Boundary Verification Suite (`RoleBoundarySecurityTest`) | Delivered |
-| **Milestone 4D** | System Architecture & Operations Handover Runbook (`HANDOVER_RUNBOOK.md`) | Delivered |
-| **Milestone 5A** | Container hardening (non-root `appuser`, JVM memory ergonomics, curl probes) & Docker Compose stack | Delivered |
-| **Milestone 5B** | Automated CI/CD GitHub Actions pipeline (`ci.yml`) for JDK 25 and PostgreSQL 16 | Delivered |
-| **Milestone 5C** | True multithreaded quota exhaustion concurrency tests & full-stack integration regression suite (95/95 passing) | Delivered |
+| **Security & Auditing** | Spring Security 6, BCrypt, Session JDBC, Append-Only Immutable PostgreSQL Trigger, `@Audited` AOP Aspect | Verified |
+| **Identity & Sequences** | Atomic DB sequences (`EMP-xxx`, `HR-xxx`), Org CRUD, 2-Step Dry-Run CSV Bulk Onboarding | Verified |
+| **Attendance Engine** | Workday punch engine, Nightly finalizer cron (23:59 Mon-Fri), Audited manual corrections | Verified |
+| **Leave Concurrency Engine** | Pessimistic row locking (`SELECT FOR UPDATE`), multi-year quota isolation, zero-deadlock ascending locks | Verified |
+| **Visual Analytics** | Headcount distribution, 14-day attendance trends, cumulative category leave utilization via Chart.js | Verified |
+| **Streaming Reporting** | RFC-4180 Streaming CSV Export engine (Employees, Attendance roster, Audit log) with CSV injection defense | Verified |
+| **Role Boundary Hardening** | System Hardening & Role Boundary Suite (`RoleBoundarySecurityTest`), strict CSP, HSTS, X-Frame DENY | Verified |
+| **System Operations** | Architectural runbook, database recovery procedures, schema management runbook (`HANDOVER_RUNBOOK.md`) | Verified |
+| **Container Hardening** | Hardened multi-stage Dockerfile (non-root `appuser`, JVM ergonomics, curl probes) & Docker Compose stack | Verified |
+| **CI/CD Pipeline** | Automated CI/CD GitHub Actions pipeline (`ci.yml`) for JDK 25 and PostgreSQL 16 | Verified |
+| **High-Concurrency Tests** | True multithreaded quota exhaustion tests, sequence collision tests, full-stack regression suite (95/95 passing) | Verified |

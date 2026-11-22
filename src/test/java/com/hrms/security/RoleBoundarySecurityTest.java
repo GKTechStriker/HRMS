@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Milestone 4 & 5 System Hardening & Role Boundary Verification Suite (GAP-11).
+ * System Hardening & Role Boundary Verification Suite.
  *
  * Verifies strict boundary separation:
  * 1. SUPER_ADMIN (superadmin@company.com) is strictly read-only on HR domain data (POST mutations receive 403 Forbidden).

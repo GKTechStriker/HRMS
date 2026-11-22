@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Milestone 3 & Milestone 5 Gate Verification:
+ * Concurrency & Quota Exhaustion Verification Suite:
  * Validates concurrency safety on leave requests and verifies that:
  * 1. Concurrent requests with overlapping dates are strictly blocked (exactly 1 success).
  * 2. Concurrent requests cannot overdraw the employee's balance quota under race conditions (true multithreaded quota exhaustion).
@@ -122,7 +122,7 @@ class LeaveConcurrencyTest {
     }
 
     @Test
-    @DisplayName("Milestone 3 Gate: Concurrent overlapping leave requests result in exactly 1 success")
+    @DisplayName("Concurrency: Concurrent overlapping leave requests result in exactly 1 success")
     void testConcurrentOverlappingLeaveRequests() throws Exception {
         // Pick next Monday and Tuesday to guarantee working days
         LocalDate nextMonday = LocalDate.now().plusDays(7);
@@ -182,7 +182,7 @@ class LeaveConcurrencyTest {
     }
 
     @Test
-    @DisplayName("Milestone 5 Gate: True multithreaded quota exhaustion blocks overdraw under concurrency")
+    @DisplayName("Concurrency: True multithreaded quota exhaustion blocks overdraw under concurrency")
     void testConcurrencyBalanceHoldPreventsOverdraw() throws Exception {
         // Prepare balance: allocate 10 days, mark 8 days used, leaving exactly 2 days remaining
         LeaveBalance balance = leaveBalanceRepository.findByEmployeeIdAndLeaveTypeIdAndYear(
