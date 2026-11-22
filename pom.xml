@@ -15,8 +15,8 @@
     <groupId>com.hrms</groupId>
     <artifactId>hrms-app</artifactId>
     <version>1.0.0</version>
-    <name>HRMS Hackathon</name>
-    <description>HRMS for Build with Bharat 4.0</description>
+    <name>HRMS Platform</name>
+    <description>Enterprise Human Resource Management System</description>
 
     <properties>
         <java.version>25</java.version>

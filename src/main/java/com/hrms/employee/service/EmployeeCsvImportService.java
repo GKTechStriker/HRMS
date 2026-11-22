@@ -25,7 +25,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 /**
- * CSV Bulk Import Service with Dry-Run Validation Mode (Section 6.2 & Milestone 2 Gate).
+ * CSV Bulk Import Service with Dry-Run Validation Mode (Section 6.2).
  * Expected CSV Header:
  * full_name,email,phone,department,job_role,date_of_birth,date_of_joining,role
  */

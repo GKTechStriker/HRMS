@@ -69,25 +69,4 @@ public class AuditService {
     public List<String> getDistinctActions() {
         return auditLogRepository.findDistinctActions();
     }
-
-    /**
-     * Week 2 Gate Verification Method (Enactment Plan Page 3):
-     * "Verify audit table writes actor/session/IP/timestamp on a dummy method"
-     */
-    @Transactional
-    @PreAuthorize("hasRole('HR_ADMIN')")
-    @Audited(action = "AUDIT_FOUNDATION_VERIFIED", targetType = "SystemVerification")
-    public UUID verifyDummyAuditWrite(String verificationNote) {
-        UUID verificationId = UUID.randomUUID();
-        AuditContext.setTarget(
-                verificationId,
-                Map.of("status", "UNVERIFIED"),
-                Map.of(
-                        "status", "VERIFIED",
-                        "note", verificationNote != null ? verificationNote : "Phase 1 Week 2 Audit Gate Check",
-                        "verifiedAt", Instant.now(clock).toString()
-                )
-        );
-        return verificationId;
-    }
 }

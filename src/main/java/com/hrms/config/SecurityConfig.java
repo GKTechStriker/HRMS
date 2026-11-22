@@ -63,6 +63,11 @@ public class SecurityConfig {
 
         http
             .cors(Customizer.withDefaults())
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.deny())
+                .contentTypeOptions(Customizer.withDefaults())
+                .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
+            )
             .addFilterAfter(absoluteTimeoutFilter, SecurityContextHolderFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
@@ -83,7 +88,7 @@ public class SecurityConfig {
                 // (Service layer enforces SUPER_ADMIN = any session, others = own session only)
                 .requestMatchers(HttpMethod.POST, "/sessions/*/revoke").authenticated()
                 // Operational HR write paths restricted strictly to HR_ADMIN (Super Admin is read-only on HR data)
-                .requestMatchers(HttpMethod.POST, "/employees/**", "/departments/**", "/audit/verify-dummy").hasRole("HR_ADMIN")
+                .requestMatchers(HttpMethod.POST, "/employees/**", "/departments/**").hasRole("HR_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/employees/new", "/employees/*/edit", "/employees/import", "/departments/new").hasRole("HR_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/employees", "/departments/**").hasAnyRole("SUPER_ADMIN", "HR_ADMIN")
                 // Attendance & Daily Operations (Milestone 3)

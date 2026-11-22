@@ -96,24 +96,24 @@ class Phase5DevOpsAndFullStackIntegrationTest {
     @DisplayName("GAP-11: Audited action writes immutable AuditLog entry with before/after JSONB")
     @WithUserDetails("hr1@company.com")
     void auditAspectInterceptsAndPersistsAuditRecord() throws Exception {
-        String testNote = "Milestone 5 Full Stack Verification Note";
+        String deptName = "Audit Aspect Test Dept";
 
-        mockMvc.perform(post("/audit/verify-dummy")
+        mockMvc.perform(post("/departments/new")
                         .with(csrf())
-                        .param("note", testNote))
+                        .param("name", deptName))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/dashboard"));
+                .andExpect(redirectedUrl("/departments"));
 
         List<AuditLog> matchingLogs = auditLogRepository.findAll().stream()
-                .filter(log -> "AUDIT_FOUNDATION_VERIFIED".equals(log.getAction()))
+                .filter(log -> "DEPARTMENT_CREATED".equals(log.getAction()))
                 .toList();
 
-        assertFalse(matchingLogs.isEmpty(), "AuditLog repository must contain AUDIT_FOUNDATION_VERIFIED record");
+        assertFalse(matchingLogs.isEmpty(), "AuditLog repository must contain DEPARTMENT_CREATED record");
         AuditLog latest = matchingLogs.get(matchingLogs.size() - 1);
-        assertEquals("SystemVerification", latest.getTargetType());
+        assertEquals("Department", latest.getTargetType());
         assertEquals("hr1@company.com", latest.getUser().getEmail());
         assertNotNull(latest.getNewData(), "New data JSON snapshot must be populated");
-        assertEquals("VERIFIED", latest.getNewData().get("status"), "New data snapshot must contain VERIFIED status");
+        assertEquals(deptName, latest.getNewData().get("name"), "New data snapshot must contain created department name");
     }
 
     // =========================================================================

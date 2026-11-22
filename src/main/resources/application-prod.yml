@@ -31,6 +31,9 @@ management:
         enabled: true
 
 hrms:
+  seed:
+    enabled: ${HRMS_SEED_ENABLED:false}
+    demo-data: ${HRMS_SEED_DEMO_DATA:false}
   demo-hints:
     enabled: false
   cors:

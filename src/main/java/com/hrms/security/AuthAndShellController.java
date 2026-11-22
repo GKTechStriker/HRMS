@@ -161,14 +161,4 @@ public class AuthAndShellController {
         }
         return "redirect:/sessions";
     }
-
-    @PostMapping("/audit/verify-dummy")
-    @PreAuthorize("hasRole('HR_ADMIN')")
-    public String verifyAuditGate(@RequestParam(name = "note", required = false) String note,
-                                  RedirectAttributes redirectAttributes) {
-        UUID verificationId = auditService.verifyDummyAuditWrite(note);
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Week 2 Gate Verified: Audit entry recorded for targetId=" + verificationId);
-        return "redirect:/dashboard";
-    }
 }

@@ -167,6 +167,11 @@ public class EmployeeService {
             if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
                 throw new BusinessException("A user account already exists with email: " + normalizedEmail);
             }
+            if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+                if (dto.getPassword().length() < 8) {
+                    throw new BusinessException("Explicit employee password must be at least 8 characters long.");
+                }
+            }
             String rawPassword = (dto.getPassword() != null && !dto.getPassword().isBlank())
                     ? dto.getPassword()
                     : defaultInitialPassword;
