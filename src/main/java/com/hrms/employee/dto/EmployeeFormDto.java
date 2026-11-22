@@ -10,6 +10,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import jakarta.validation.constraints.Pattern;
+
 /**
  * Form-backing DTO for creating and editing Employee records (Section 6.2).
  */
@@ -21,6 +23,10 @@ public class EmployeeFormDto {
     @Email(message = "Please enter a valid work email address")
     private String email;
 
+    @Pattern(
+        regexp = "^$|^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!_\\-]).{8,128}$",
+        message = "Password must be at least 8 characters and include uppercase, lowercase, number, and special character (@#$%^&+=!_-)."
+    )
     private String password;
 
     private Role systemRole = Role.EMPLOYEE;

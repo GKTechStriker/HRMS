@@ -48,6 +48,9 @@ import java.util.UUID;
 @Service
 public class EmployeeService {
 
+    private static final java.util.regex.Pattern PASSWORD_COMPLEXITY_PATTERN =
+            java.util.regex.Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!_\\-]).{8,128}$");
+
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
     private final JobRoleRepository jobRoleRepository;
@@ -168,8 +171,9 @@ public class EmployeeService {
                 throw new BusinessException("A user account already exists with email: " + normalizedEmail);
             }
             if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
-                if (dto.getPassword().length() < 8) {
-                    throw new BusinessException("Explicit employee password must be at least 8 characters long.");
+                if (!PASSWORD_COMPLEXITY_PATTERN.matcher(dto.getPassword()).matches()) {
+                    throw new BusinessException(
+                            "Explicit employee password must be at least 8 characters and include uppercase, lowercase, number, and special character (@#$%^&+=!_-).");
                 }
             }
             String rawPassword = (dto.getPassword() != null && !dto.getPassword().isBlank())

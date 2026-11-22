@@ -194,6 +194,7 @@ class Phase3SessionAndPasswordRegressionTest {
         tempUser.setPasswordHash(passwordEncoder.encode(rawPass));
         tempUser.setRole(Role.EMPLOYEE);
         tempUser.setActive(true);
+        tempUser.setPasswordResetAt(Instant.now());
         tempUser = userRepository.save(tempUser);
 
         Department dept = departmentRepository.findAll().get(0);
@@ -366,6 +367,42 @@ class Phase3SessionAndPasswordRegressionTest {
             User restore = userRepository.findById(empUser.getId()).orElseThrow();
             restore.setPasswordHash(originalHash);
             restore.setPasswordResetAt(originalResetAt);
+            userRepository.saveAndFlush(restore);
+        }
+    }
+
+    @Test
+    @DisplayName("P0/P1 Security: Password change rejects passwords failing complexity regex")
+    @WithUserDetails("emp1@company.com")
+    void passwordFailingComplexityRegexIsRejected() throws Exception {
+        User empUser = userRepository.findByEmail("emp1@company.com").orElseThrow();
+        String originalHash = empUser.getPasswordHash();
+        String tempCurrent = "TemporaryCurrent#2026";
+
+        try {
+            empUser.setPasswordHash(passwordEncoder.encode(tempCurrent));
+            userRepository.saveAndFlush(empUser);
+
+            // Missing special character and number
+            mockMvc.perform(post("/account/password")
+                            .with(csrf())
+                            .param("currentPassword", tempCurrent)
+                            .param("newPassword", "SimplePassword")
+                            .param("confirmPassword", "SimplePassword"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("New password must contain at least one uppercase letter")));
+
+            // Missing special character
+            mockMvc.perform(post("/account/password")
+                            .with(csrf())
+                            .param("currentPassword", tempCurrent)
+                            .param("newPassword", "SimplePassword123")
+                            .param("confirmPassword", "SimplePassword123"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("New password must contain at least one uppercase letter")));
+        } finally {
+            User restore = userRepository.findById(empUser.getId()).orElseThrow();
+            restore.setPasswordHash(originalHash);
             userRepository.saveAndFlush(restore);
         }
     }

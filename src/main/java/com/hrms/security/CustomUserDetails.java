@@ -25,6 +25,7 @@ public class CustomUserDetails implements UserDetails, Serializable {
     private final Role role;
     private final String hrCode;
     private final boolean active;
+    private final boolean passwordResetRequired;
 
     public CustomUserDetails(User user) {
         this.userId = user.getId();
@@ -33,10 +34,15 @@ public class CustomUserDetails implements UserDetails, Serializable {
         this.role = user.getRole();
         this.hrCode = user.getHrCode();
         this.active = user.isActive();
+        this.passwordResetRequired = (user.getPasswordResetAt() == null);
     }
 
     public UUID getUserId() {
         return userId;
+    }
+
+    public boolean isPasswordResetRequired() {
+        return passwordResetRequired;
     }
 
     public String getEmail() {
