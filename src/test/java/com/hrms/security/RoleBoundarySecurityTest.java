@@ -27,6 +27,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -336,5 +337,43 @@ class RoleBoundarySecurityTest {
 
         UserSession revokedSession = userSessionRepository.findById(empSession.getId()).orElseThrow();
         assertEquals(SessionEndedReason.REVOKED, revokedSession.getEndedReason(), "Super Admin must be permitted to revoke any user session");
+    }
+
+    @Test
+    @DisplayName("P0 Security: Authenticated user with null passwordResetAt is forced to rotate password")
+    @Transactional
+    void userWithNullPasswordResetAtIsForcedToChangePassword() throws Exception {
+        User unrotated = new User();
+        unrotated.setEmail("unrotated_" + UUID.randomUUID() + "@company.com");
+        unrotated.setPasswordHash("$2a$10$7EqJtq98hPqEX7fNZaFWoOhi55g8o.90/uWf6zGox93uL3k56bJeu");
+        unrotated.setRole(com.hrms.security.entity.Role.EMPLOYEE);
+        unrotated.setActive(true);
+        unrotated.setPasswordResetAt(null);
+        unrotated = userRepository.saveAndFlush(unrotated);
+
+        CustomUserDetails userDetails = new CustomUserDetails(unrotated);
+
+        // Attempt to access dashboard with unrotated user credentials
+        mockMvc.perform(get("/dashboard")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(userDetails)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/account/password?required=true"));
+
+        // Access to /account/password is permitted
+        mockMvc.perform(get("/account/password")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(userDetails)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("P0 Security: Security headers (CSP, X-Frame-Options, X-Content-Type-Options, HSTS) are strictly configured")
+    void securityHeadersAreStrictlyEnforced() throws Exception {
+        mockMvc.perform(get("/login").secure(true))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Frame-Options", "DENY"))
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+                .andExpect(header().string("Strict-Transport-Security", org.hamcrest.Matchers.containsString("max-age=31536000")))
+                .andExpect(header().string("Content-Security-Policy", org.hamcrest.Matchers.containsString("default-src 'self'")))
+                .andExpect(header().string("Content-Security-Policy", org.hamcrest.Matchers.containsString("frame-ancestors 'none'")));
     }
 }

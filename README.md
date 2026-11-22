@@ -1,6 +1,6 @@
 # Enterprise HRMS
 
-Enterprise Human Resource Management System built for Build with Bharat 4.0 Hackathon.
+Enterprise Human Resource Management System with multi-tier access control, immutable audit trails, attendance tracking, and leave management.
 
 ## Tech Stack
 - **Runtime**: Java 25

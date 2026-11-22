@@ -1,0 +1,20 @@
+# Test Profile Configuration
+spring:
+  jpa:
+    show-sql: false
+
+hrms:
+  seed:
+    enabled: true
+    demo-data: false
+  demo-hints:
+    enabled: false
+
+logging:
+  level:
+    root: INFO
+    com.hrms: WARN
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN

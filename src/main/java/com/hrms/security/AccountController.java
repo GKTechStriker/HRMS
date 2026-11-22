@@ -61,8 +61,20 @@ public class AccountController {
                     formDto.getNewPassword(),
                     formDto.getConfirmPassword()
             );
+
+            // Refresh authentication principal with updated passwordResetAt so passwordResetRequired becomes false
+            User updatedUser = accountService.getUserById(principal.getUserId());
+            CustomUserDetails updatedPrincipal = new CustomUserDetails(updatedUser);
+            org.springframework.security.authentication.UsernamePasswordAuthenticationToken newAuth =
+                    new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                            updatedPrincipal,
+                            updatedPrincipal.getPassword(),
+                            updatedPrincipal.getAuthorities()
+                    );
+            org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(newAuth);
+
             redirectAttributes.addFlashAttribute("successMessage",
-                    "Your password has been updated and recorded in the audit trail.");
+                    "Your password has been successfully updated! You now have full access to your account.");
             return "redirect:/account/password";
         } catch (BusinessException | ResourceNotFoundException ex) {
             User user = accountService.getUserById(principal.getUserId());

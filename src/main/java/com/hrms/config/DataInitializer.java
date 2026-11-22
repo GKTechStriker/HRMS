@@ -193,50 +193,76 @@ public class DataInitializer implements ApplicationRunner {
                 });
 
         // Super Admin
-        if (userRepository.findByEmail("superadmin@company.com").isEmpty()) {
-            User superAdmin = new User();
-            superAdmin.setEmail("superadmin@company.com");
-            superAdmin.setPasswordHash(encodedPassword);
-            superAdmin.setRole(Role.SUPER_ADMIN);
-            superAdmin.setActive(true);
-            userRepository.save(superAdmin);
-            log.info("Baseline SUPER_ADMIN created: superadmin@company.com");
-        }
+        userRepository.findByEmail("superadmin@company.com").ifPresentOrElse(
+                u -> {
+                    if (u.getPasswordResetAt() == null) {
+                        u.setPasswordResetAt(Instant.now(clock));
+                        userRepository.save(u);
+                    }
+                },
+                () -> {
+                    User superAdmin = new User();
+                    superAdmin.setEmail("superadmin@company.com");
+                    superAdmin.setPasswordHash(encodedPassword);
+                    superAdmin.setRole(Role.SUPER_ADMIN);
+                    superAdmin.setActive(true);
+                    superAdmin.setPasswordResetAt(Instant.now(clock));
+                    userRepository.save(superAdmin);
+                    log.info("Baseline SUPER_ADMIN created: superadmin@company.com");
+                }
+        );
 
         // HR Admin (EMP-001, Priya Sharma)
-        if (userRepository.findByEmail("hr1@company.com").isEmpty()) {
-            User hrAdmin = new User();
-            hrAdmin.setEmail("hr1@company.com");
-            hrAdmin.setPasswordHash(encodedPassword);
-            hrAdmin.setRole(Role.HR_ADMIN);
-            hrAdmin.setHrCode("HR-001");
-            hrAdmin.setActive(true);
-            hrAdmin = userRepository.save(hrAdmin);
-
-            if (employeeRepository.findByEmployeeCode("EMP-001").isEmpty()) {
-                Employee hrEmp = new Employee();
-                hrEmp.setUser(hrAdmin);
-                hrEmp.setDepartment(hrDept);
-                hrEmp.setJobRole(hrSpecialist);
-                hrEmp.setEmployeeCode("EMP-001");
-                hrEmp.setFullName("Priya Sharma");
-                hrEmp.setPhone("+91-9876543210");
-                hrEmp.setDateOfBirth(LocalDate.of(1992, 5, 14));
-                hrEmp.setDateOfJoining(LocalDate.of(2023, 1, 10));
-                hrEmp.setStatus(EmployeeStatus.ACTIVE);
-                employeeRepository.save(hrEmp);
+        User hrAdmin = userRepository.findByEmail("hr1@company.com").map(u -> {
+            if (u.getPasswordResetAt() == null) {
+                u.setPasswordResetAt(Instant.now(clock));
+                return userRepository.save(u);
             }
+            return u;
+        }).orElseGet(() -> {
+            User u = new User();
+            u.setEmail("hr1@company.com");
+            u.setPasswordHash(encodedPassword);
+            u.setRole(Role.HR_ADMIN);
+            u.setHrCode("HR-001");
+            u.setActive(true);
+            u.setPasswordResetAt(Instant.now(clock));
+            u = userRepository.save(u);
             log.info("Baseline HR_ADMIN created: hr1@company.com (HR-001 / EMP-001)");
+            return u;
+        });
+
+        if (employeeRepository.findByEmployeeCode("EMP-001").isEmpty()) {
+            Employee hrEmp = new Employee();
+            hrEmp.setUser(hrAdmin);
+            hrEmp.setDepartment(hrDept);
+            hrEmp.setJobRole(hrSpecialist);
+            hrEmp.setEmployeeCode("EMP-001");
+            hrEmp.setFullName("Priya Sharma");
+            hrEmp.setPhone("+91-9876543210");
+            hrEmp.setDateOfBirth(LocalDate.of(1992, 5, 14));
+            hrEmp.setDateOfJoining(LocalDate.of(2023, 1, 10));
+            hrEmp.setStatus(EmployeeStatus.ACTIVE);
+            employeeRepository.save(hrEmp);
         }
 
         // Employee (EMP-002, Aarav Mehta)
-        if (userRepository.findByEmail("emp1@company.com").isEmpty()) {
-            User empUser = new User();
-            empUser.setEmail("emp1@company.com");
-            empUser.setPasswordHash(encodedPassword);
-            empUser.setRole(Role.EMPLOYEE);
-            empUser.setActive(true);
-            empUser = userRepository.save(empUser);
+        User empUser = userRepository.findByEmail("emp1@company.com").map(u -> {
+            if (u.getPasswordResetAt() == null) {
+                u.setPasswordResetAt(Instant.now(clock));
+                return userRepository.save(u);
+            }
+            return u;
+        }).orElseGet(() -> {
+            User u = new User();
+            u.setEmail("emp1@company.com");
+            u.setPasswordHash(encodedPassword);
+            u.setRole(Role.EMPLOYEE);
+            u.setActive(true);
+            u.setPasswordResetAt(Instant.now(clock));
+            u = userRepository.save(u);
+            return u;
+        });
 
             if (employeeRepository.findByEmployeeCode("EMP-002").isEmpty()) {
                 Employee empRecord = new Employee();
@@ -252,7 +278,6 @@ public class DataInitializer implements ApplicationRunner {
                 employeeRepository.save(empRecord);
             }
             log.info("Baseline EMPLOYEE created: emp1@company.com (EMP-002)");
-        }
     }
 
     private void seedDemoData(String encodedPassword) {
@@ -367,7 +392,13 @@ public class DataInitializer implements ApplicationRunner {
         employeeRepository.findByEmployeeCode("EMP-002").ifPresent(e -> createdEmployees.put("emp1@company.com", e));
 
         for (DemoEmpSpec s : specs) {
-            User u = userRepository.findByEmail(s.email).orElseGet(() -> {
+            User u = userRepository.findByEmail(s.email).map(existing -> {
+                if (existing.getPasswordResetAt() == null) {
+                    existing.setPasswordResetAt(Instant.now(clock));
+                    return userRepository.save(existing);
+                }
+                return existing;
+            }).orElseGet(() -> {
                 User newUser = new User();
                 newUser.setEmail(s.email);
                 newUser.setPasswordHash(encodedPassword);
@@ -376,6 +407,7 @@ public class DataInitializer implements ApplicationRunner {
                     newUser.setHrCode(s.hrCode != null ? s.hrCode : allocateHrCode(2));
                 }
                 newUser.setActive(true);
+                newUser.setPasswordResetAt(Instant.now(clock));
                 return userRepository.save(newUser);
             });
 

@@ -76,31 +76,6 @@
                 <i data-lucide="user-plus" class="w-3.5 h-3.5 text-indigo-500"></i>
                 Add Employee
             </a>
-
-            <!-- Subtle Audit Diagnostic Toggle (HR_ADMIN only; omitted from DOM for SUPER_ADMIN & EMPLOYEE) -->
-            <div sec:authorize="hasRole('HR_ADMIN')" class="relative">
-                <button type="button"
-                        onclick="document.getElementById('auditDiagPanel').classList.toggle('hidden')"
-                        title="Audit Hook Diagnostic"
-                        class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl transition">
-                    <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
-                    <span>Audit Ping</span>
-                </button>
-                <div id="auditDiagPanel"
-                     class="hidden absolute right-0 mt-2 w-72 p-4 rounded-xl bg-white border border-slate-200 shadow-xl z-40">
-                    <p class="text-xs font-bold text-slate-800 mb-1">Audit Trail Verification</p>
-                    <p class="text-[11px] text-slate-500 mb-3">Record a session-linked test entry in the immutable audit log.</p>
-                    <form th:action="@{/audit/verify-dummy}" method="post" class="space-y-2.5">
-                        <input type="text" name="note" placeholder="Audit verification note..."
-                               value="Manual Audit Verification Check"
-                               class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-600"/>
-                        <button type="submit"
-                                class="w-full py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition">
-                            Record Audited Entry
-                        </button>
-                    </form>
-                </div>
-            </div>
         </div>
     </section>
 

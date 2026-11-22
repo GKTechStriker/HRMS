@@ -22,6 +22,9 @@ import java.lang.reflect.Method;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+
 import java.util.UUID;
 
 /**
@@ -30,6 +33,7 @@ import java.util.UUID;
  */
 @Aspect
 @Component
+@Order(Ordered.LOWEST_PRECEDENCE - 10)
 public class AuditAspect {
 
     private static final Logger log = LoggerFactory.getLogger(AuditAspect.class);

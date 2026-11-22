@@ -2,6 +2,7 @@ package com.hrms.config;
 
 import com.hrms.security.AbsoluteSessionTimeoutFilter;
 import com.hrms.security.CustomUserDetails;
+import com.hrms.security.PasswordChangeEnforcementFilter;
 import com.hrms.security.SessionManagementService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,10 +61,27 @@ public class SecurityConfig {
                                                    Clock clock) throws Exception {
         AbsoluteSessionTimeoutFilter absoluteTimeoutFilter =
                 new AbsoluteSessionTimeoutFilter(sessionManagementService, clock, absoluteTimeoutHours);
+        PasswordChangeEnforcementFilter passwordChangeFilter = new PasswordChangeEnforcementFilter();
 
         http
             .cors(Customizer.withDefaults())
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.deny())
+                .contentTypeOptions(Customizer.withDefaults())
+                .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
+                .contentSecurityPolicy(csp -> csp.policyDirectives(
+                    "default-src 'self'; " +
+                    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net; " +
+                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+                    "font-src 'self' https://fonts.gstatic.com data:; " +
+                    "img-src 'self' data: https:; " +
+                    "connect-src 'self'; " +
+                    "frame-ancestors 'none'; " +
+                    "object-src 'none';"
+                ))
+            )
             .addFilterAfter(absoluteTimeoutFilter, SecurityContextHolderFilter.class)
+            .addFilterAfter(passwordChangeFilter, AbsoluteSessionTimeoutFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/health",
@@ -83,7 +101,7 @@ public class SecurityConfig {
                 // (Service layer enforces SUPER_ADMIN = any session, others = own session only)
                 .requestMatchers(HttpMethod.POST, "/sessions/*/revoke").authenticated()
                 // Operational HR write paths restricted strictly to HR_ADMIN (Super Admin is read-only on HR data)
-                .requestMatchers(HttpMethod.POST, "/employees/**", "/departments/**", "/audit/verify-dummy").hasRole("HR_ADMIN")
+                .requestMatchers(HttpMethod.POST, "/employees/**", "/departments/**").hasRole("HR_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/employees/new", "/employees/*/edit", "/employees/import", "/departments/new").hasRole("HR_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/employees", "/departments/**").hasAnyRole("SUPER_ADMIN", "HR_ADMIN")
                 // Attendance & Daily Operations (Milestone 3)

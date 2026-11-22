@@ -19,6 +19,7 @@ import com.hrms.security.repository.UserRepository;
 import com.hrms.security.repository.UserSessionRepository;
 import jakarta.servlet.Filter;
 import jakarta.servlet.http.Cookie;
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -174,6 +175,7 @@ class EmployeeCsvAndSessionRegressionTest {
         tempUser.setPasswordHash(passwordEncoder.encode(rawPass));
         tempUser.setRole(Role.EMPLOYEE);
         tempUser.setActive(true);
+        tempUser.setPasswordResetAt(Instant.now());
         tempUser = userRepository.save(tempUser);
 
         Department dept = departmentRepository.findAll().get(0);

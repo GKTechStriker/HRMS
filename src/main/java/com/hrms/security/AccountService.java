@@ -22,6 +22,9 @@ import java.util.UUID;
 @Service
 public class AccountService {
 
+    private static final java.util.regex.Pattern PASSWORD_COMPLEXITY_PATTERN =
+            java.util.regex.Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!_\\-]).{8,128}$");
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
@@ -54,6 +57,10 @@ public class AccountService {
         }
         if (newPassword.length() > 128) {
             throw new BusinessException("New password must not exceed 128 characters.");
+        }
+        if (!PASSWORD_COMPLEXITY_PATTERN.matcher(newPassword).matches()) {
+            throw new BusinessException(
+                    "New password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character (@#$%^&+=!_-).");
         }
         if (!newPassword.equals(confirmPassword)) {
             throw new BusinessException("New password and confirmation do not match.");
