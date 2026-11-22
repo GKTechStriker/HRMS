@@ -7,6 +7,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -26,6 +27,7 @@ public class CustomUserDetails implements UserDetails, Serializable {
     private final String hrCode;
     private final boolean active;
     private final boolean passwordResetRequired;
+    private final Instant lockedUntil;
 
     public CustomUserDetails(User user) {
         this.userId = user.getId();
@@ -35,6 +37,7 @@ public class CustomUserDetails implements UserDetails, Serializable {
         this.hrCode = user.getHrCode();
         this.active = user.isActive();
         this.passwordResetRequired = (user.getPasswordResetAt() == null);
+        this.lockedUntil = user.getLockedUntil();
     }
 
     public UUID getUserId() {
@@ -79,7 +82,7 @@ public class CustomUserDetails implements UserDetails, Serializable {
 
     @Override
     public boolean isAccountNonLocked() {
-        return active;
+        return active && (lockedUntil == null || !lockedUntil.isAfter(java.time.Instant.now()));
     }
 
     @Override

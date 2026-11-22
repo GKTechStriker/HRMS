@@ -219,6 +219,19 @@ public class EmployeeController {
         return "redirect:/employees/" + id;
     }
 
+    @PostMapping("/{id}/unlock")
+    @PreAuthorize("hasRole('HR_ADMIN')")
+    public String unlockEmployee(@PathVariable("id") UUID id,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            employeeService.unlockEmployeeAccount(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Employee account has been unlocked successfully.");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+        }
+        return "redirect:/employees/" + id;
+    }
+
     @GetMapping("/import")
     @PreAuthorize("hasRole('HR_ADMIN')")
     public String csvImportPage() {

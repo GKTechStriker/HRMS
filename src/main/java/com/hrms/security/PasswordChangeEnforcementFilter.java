@@ -58,6 +58,8 @@ public class PasswordChangeEnforcementFilter extends OncePerRequestFilter {
         return path.startsWith("/account/password")
                 || path.equals("/logout")
                 || path.equals("/login")
+                || path.startsWith("/forgot-password")
+                || path.startsWith("/reset-password")
                 || path.equals("/error")
                 || path.startsWith("/css/")
                 || path.startsWith("/js/")
