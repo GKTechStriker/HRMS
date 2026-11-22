@@ -13,6 +13,7 @@ import com.hrms.employee.repository.EmployeeRepository;
 import com.hrms.exception.BusinessException;
 import com.hrms.exception.ResourceNotFoundException;
 import com.hrms.security.CustomUserDetails;
+import com.hrms.security.LoginAttemptService;
 import com.hrms.security.SessionManagementService;
 import com.hrms.security.entity.Role;
 import com.hrms.security.entity.User;
@@ -60,6 +61,7 @@ public class EmployeeService {
     private final SessionManagementService sessionManagementService;
     private final String defaultInitialPassword;
     private final LeaveBalanceService leaveBalanceService;
+    private final LoginAttemptService loginAttemptService;
     private final Clock clock;
 
     @Autowired
@@ -72,6 +74,7 @@ public class EmployeeService {
                            SessionManagementService sessionManagementService,
                            @Value("${hrms.security.default-initial-password:}") String defaultInitialPassword,
                            @Autowired(required = false) LeaveBalanceService leaveBalanceService,
+                           @Autowired(required = false) LoginAttemptService loginAttemptService,
                            @Autowired(required = false) Clock clock) {
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
@@ -82,6 +85,7 @@ public class EmployeeService {
         this.sessionManagementService = sessionManagementService;
         this.defaultInitialPassword = defaultInitialPassword;
         this.leaveBalanceService = leaveBalanceService;
+        this.loginAttemptService = loginAttemptService;
         this.clock = clock != null ? clock : Clock.systemDefaultZone();
     }
 
@@ -94,7 +98,7 @@ public class EmployeeService {
                            SessionManagementService sessionManagementService,
                            String defaultInitialPassword) {
         this(employeeRepository, departmentRepository, jobRoleRepository, userRepository,
-             passwordEncoder, jdbcTemplate, sessionManagementService, defaultInitialPassword, null, Clock.systemDefaultZone());
+             passwordEncoder, jdbcTemplate, sessionManagementService, defaultInitialPassword, null, null, Clock.systemDefaultZone());
     }
 
     /**
@@ -312,6 +316,29 @@ public class EmployeeService {
 
         AuditContext.setTarget(emp.getId(), beforeSnapshot, afterSnapshot);
         return emp;
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('HR_ADMIN')")
+    public void unlockEmployeeAccount(UUID employeeId) {
+        Employee emp = employeeRepository.findByIdWithDetails(employeeId)
+                .orElseThrow(() -> ResourceNotFoundException.forEntity("Employee", employeeId.toString()));
+        if (emp.getUser() == null) {
+            throw new BusinessException("Employee has no linked user account.");
+        }
+        User adminUser = null;
+        CustomUserDetails actor = currentActor();
+        if (actor != null) {
+            adminUser = userRepository.findById(actor.getUserId()).orElse(null);
+        }
+        if (loginAttemptService != null) {
+            loginAttemptService.unlockUser(emp.getUser().getId(), adminUser);
+        } else {
+            User user = emp.getUser();
+            user.setFailedLoginAttempts(0);
+            user.setLockedUntil(null);
+            userRepository.save(user);
+        }
     }
 
     private CustomUserDetails currentActor() {

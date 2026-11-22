@@ -1,7 +1,9 @@
 package com.hrms.config;
 
+import com.hrms.audit.AuditAspect;
 import com.hrms.security.AbsoluteSessionTimeoutFilter;
 import com.hrms.security.CustomUserDetails;
+import com.hrms.security.LoginAttemptService;
 import com.hrms.security.PasswordChangeEnforcementFilter;
 import com.hrms.security.SessionManagementService;
 import jakarta.servlet.http.HttpSession;
@@ -11,6 +13,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,6 +22,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -58,6 +63,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    SessionManagementService sessionManagementService,
+                                                   LoginAttemptService loginAttemptService,
                                                    Clock clock) throws Exception {
         AbsoluteSessionTimeoutFilter absoluteTimeoutFilter =
                 new AbsoluteSessionTimeoutFilter(sessionManagementService, clock, absoluteTimeoutHours);
@@ -88,6 +94,10 @@ public class SecurityConfig {
                     "/actuator/health/**",
                     "/actuator/info",
                     "/login",
+                    "/forgot-password",
+                    "/forgot-password/**",
+                    "/reset-password",
+                    "/reset-password/**",
                     "/error",
                     "/favicon.ico",
                     "/sample/**",
@@ -124,8 +134,8 @@ public class SecurityConfig {
             )
             .formLogin(form -> form
                 .loginPage("/login")
-                .successHandler(authenticationSuccessHandler(sessionManagementService))
-                .failureUrl("/login?error")
+                .successHandler(authenticationSuccessHandler(sessionManagementService, loginAttemptService))
+                .failureHandler(authenticationFailureHandler(loginAttemptService))
                 .permitAll()
             )
             .logout(logout -> logout
@@ -146,12 +156,33 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationSuccessHandler authenticationSuccessHandler(SessionManagementService sessionManagementService) {
+    public AuthenticationSuccessHandler authenticationSuccessHandler(SessionManagementService sessionManagementService,
+                                                                      LoginAttemptService loginAttemptService) {
         return (request, response, authentication) -> {
             if (authentication.getPrincipal() instanceof CustomUserDetails principal) {
+                loginAttemptService.recordLoginSuccess(principal.getEmail());
                 sessionManagementService.recordLoginSession(principal, request);
             }
             response.sendRedirect(request.getContextPath() + "/dashboard");
+        };
+    }
+
+    @Bean
+    public AuthenticationFailureHandler authenticationFailureHandler(LoginAttemptService loginAttemptService) {
+        return (request, response, exception) -> {
+            String username = request.getParameter("username");
+            String ipAddress = AuditAspect.extractClientIp(request);
+            if (username != null && !username.isBlank()) {
+                loginAttemptService.recordLoginFailure(username, ipAddress);
+            }
+
+            if (exception instanceof LockedException || (username != null && loginAttemptService.isAccountLocked(username))) {
+                response.sendRedirect(request.getContextPath() + "/login?locked");
+            } else if (exception instanceof DisabledException) {
+                response.sendRedirect(request.getContextPath() + "/login?disabled");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/login?error");
+            }
         };
     }
 

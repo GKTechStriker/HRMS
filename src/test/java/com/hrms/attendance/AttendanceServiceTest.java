@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -38,6 +39,9 @@ class AttendanceServiceTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private Clock clock;
+
     @Test
     @DisplayName("Clock-in and clock-out flow calculates duration and prevents duplicate punch")
     void testClockInOutFlow() {
@@ -53,7 +57,7 @@ class AttendanceServiceTest {
                 employeeUser.getId(), WorkMode.ON_SITE, "127.0.0.1", "Testing clock-in");
 
         assertNotNull(punchedIn.getId());
-        assertEquals(LocalDate.now(), punchedIn.getWorkDate());
+        assertEquals(LocalDate.now(clock), punchedIn.getWorkDate());
         assertNotNull(punchedIn.getClockIn());
         assertNull(punchedIn.getClockOut());
         assertEquals(WorkMode.ON_SITE, punchedIn.getWorkMode());
@@ -90,14 +94,14 @@ class AttendanceServiceTest {
                 .orElseThrow(() -> new IllegalStateException("Seed employee profile not found"));
 
         // Create initial record
-        AttendanceRecord initial = new AttendanceRecord(employee, LocalDate.now().minusDays(1), AttendanceStatus.ABSENT, WorkMode.ON_SITE);
+        AttendanceRecord initial = new AttendanceRecord(employee, LocalDate.now(clock).minusDays(1), AttendanceStatus.ABSENT, WorkMode.ON_SITE);
         attendanceRecordRepository.save(initial);
 
         // Prepare correction DTO
         AttendanceCorrectionDto dto = new AttendanceCorrectionDto();
         dto.setRecordId(initial.getId());
         dto.setEmployeeId(employee.getId());
-        dto.setWorkDate(LocalDate.now().minusDays(1));
+        dto.setWorkDate(LocalDate.now(clock).minusDays(1));
         dto.setStatus(AttendanceStatus.PRESENT);
         dto.setWorkMode(WorkMode.REMOTE);
         dto.setClockInTime("09:05");
